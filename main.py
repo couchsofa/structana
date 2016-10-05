@@ -29,7 +29,7 @@ def main():
 	K = assemble_global_K_I(nodes, struts)
 	K = apply_constraints(K, struts, nodes, constraints)
 
-	#graphics.renderSystem(nodes, struts, constraints, size=30)
+	graphics.renderSystem(nodes, struts, constraints, size=30)
 	print graphics.getBounds(nodes)
 
 	print K
@@ -45,6 +45,10 @@ def main():
 	d = sp.solve(K,S_G)
 
 	print d
+
+	calc_local_forces(nodes, struts, d)
+
+	print struts
 	
 #		parser = OptionParser(usage="usage: %prog [options] filename",
 #													version="%prog 1.0")

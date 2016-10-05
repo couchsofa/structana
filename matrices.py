@@ -235,3 +235,28 @@ def countConst( constraints ):
 		n += const['x'] + const['z'] + const['r']
 
 	return n
+
+# calculate the local strut forces
+def calc_local_forces(nodes, struts, d):
+	#assemble node IDs form dict
+	NodeIDs = {}
+	for ID, node in nodes.iteritems():
+		NodeIDs[node['ID']] = ID
+
+	for ID, strut in struts.iteritems():
+		alpha = strut['alpha']
+		K = strut["K"]
+		r = rot(alpha)
+
+		x1 = NodeIDs[strut["StartNode"]] * 3
+		x2 = x1 + 3
+		x3 = NodeIDs[strut["EndNode"]] * 3
+		x4 = x3 + 3
+
+		dg = np.append(d[x1:x2], d[x3:x4])
+
+		Sg = np.dot(K, dg)
+		Sl = np.dot(r, Sg)
+
+		strut["Sl"] = Sl
+
