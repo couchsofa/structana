@@ -18,21 +18,18 @@ def main():
 	checkStrutLoads(struts, strutLoads)
 	checkNodeLoads(nodes, nodeLoads)
 
-	nodes = deleteFreeNodes(nodes, struts)
-	struts = getStrutLength(nodes, struts)
-	struts = getStrutAngle(nodes, struts)
-	struts = getStrutType(struts)
-	struts = assemble_S_L(strutLoads, struts, nodes)
+	deleteFreeNodes(nodes, struts)
+	getStrutLength(nodes, struts)
+	getStrutAngle(nodes, struts)
+	getStrutType(struts)
+	assemble_S_L(strutLoads, struts, nodes)
 
 	S_G = assemble_S_G(nodeLoads, struts, nodes)
 
 	K = assemble_global_K_I(nodes, struts)
-	K = apply_constraints(K, struts, nodes, constraints)
+	apply_constraints(K, struts, nodes, constraints)
 
-	graphics.renderSystem(nodes, struts, constraints, size=30)
-	print graphics.getBounds(nodes)
-
-	print K
+	#graphics.renderSystem(nodes, struts, constraints, size=30)
 
 	if sp.det(K) == 0:
 		print('System is kinematic (det(K)=0)!')
@@ -44,11 +41,9 @@ def main():
 
 	d = sp.solve(K,S_G)
 
-	print d
-
 	calc_local_forces(nodes, struts, d)
 
-	print struts
+	print nodes
 	
 #		parser = OptionParser(usage="usage: %prog [options] filename",
 #													version="%prog 1.0")

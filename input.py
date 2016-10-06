@@ -101,22 +101,19 @@ def deleteFreeNodes(nodes, struts):
 	for freeNode in freeNodes:
 		del nodes[freeNode]
 
-	return nodes
+	#return nodes
 
 def getStrutLength(nodes, struts):
 	for ID, strut in struts.iteritems():
 		strut['l'] = strutLength(strut, nodes)
-	return struts
 
 def getStrutAngle(nodes, struts):
 	for ID, strut in struts.iteritems():
 		strut['alpha'] = strutAngle(strut, nodes)
-	return struts
 
 def getStrutType(struts):
 	for ID, strut in struts.iteritems():
 		strut['Type'] = strutType(strut)
-	return struts
 
 #calculate the length of a strut
 def strutLength(strut, nodes):

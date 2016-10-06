@@ -131,8 +131,6 @@ def apply_constraints(K, struts, nodes, constraints):
 		if np.all(K[:,i] == 0) and np.all(K[i,:] == 0):
 			K[i][i] = 1
 
-	return K
-
 # |-------|
 def K_1_I( E, I, A, l, N ):
 	e = _e( E, I, l, N )
