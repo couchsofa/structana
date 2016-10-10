@@ -1,5 +1,6 @@
 #from optparse import OptionParser
 from input import *
+from output import *
 from matrices import *
 from load_vectors import *
 import scipy.linalg as sp
@@ -43,7 +44,9 @@ def main():
 
 	calc_local_forces(nodes, struts, d)
 
-	print nodes
+
+	writeDisplacements("test", d, nodes)
+	print d
 	
 #		parser = OptionParser(usage="usage: %prog [options] filename",
 #													version="%prog 1.0")
