@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from util import *
 
 def _e( E, I, l, N ):
 	return l*math.sqrt(float(abs(N))/float(E*I))
@@ -85,34 +86,24 @@ def create_strut_K(strut):
 
 #assemble the global stiffness matrix
 def assemble_global_K_I(nodes, struts):
-	#assemble node IDs form dict
-	NodeIDs = {}
-	for ID, node in nodes.iteritems():
-		NodeIDs[node['ID']] = ID
-
 	global_K = create_global_K(nodes)
 
 	for ID, strut in struts.iteritems():
 		
 		K = create_strut_K(strut)
 
-		insertion_point = NodeIDs[strut['StartNode']] * 3
+		insertion_point = nodeNameToID(strut['StartNode'], nodes) * 3
 		global_K = insert( global_K, K, insertion_point, insertion_point, lambda x,y: x+y )
 		global_K = symmetrize(global_K)
 
 	return global_K
 
 def apply_constraints(K, struts, nodes, constraints):
-	#assemble node IDs form dict
-	NodeIDs = {}
-	for ID, node in nodes.iteritems():
-		NodeIDs[node['ID']] = ID
-
 	#apply constraints
 	size = len(nodes) * 3
 	zero = np.zeros(size)
 	for ID, const in constraints.iteritems():
-		id = NodeIDs[const['Node']]
+		id = nodeNameToID(const['Node'], nodes)
 		if const['x']:
 			x = id * 3
 			K[:,x] = zero
@@ -236,19 +227,14 @@ def countConst( constraints ):
 
 # calculate the local strut forces
 def calc_local_forces(nodes, struts, d):
-	#assemble node IDs form dict
-	NodeIDs = {}
-	for ID, node in nodes.iteritems():
-		NodeIDs[node['ID']] = ID
-
 	for ID, strut in struts.iteritems():
 		alpha = strut['alpha']
 		K = strut["K"]
 		r = rot(alpha)
 
-		x1 = NodeIDs[strut["StartNode"]] * 3
+		x1 = nodeNameToID(strut["StartNode"], nodes) * 3
 		x2 = x1 + 3
-		x3 = NodeIDs[strut["EndNode"]] * 3
+		x3 = nodeNameToID(strut["EndNode"], nodes) * 3
 		x4 = x3 + 3
 
 		dg = np.append(d[x1:x2], d[x3:x4])

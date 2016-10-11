@@ -1,5 +1,6 @@
 import numpy as np
 from matrices import rot
+from util import *
 
 #calculates the load vector from a load
 def get_S_L( load, strut):
@@ -58,17 +59,12 @@ def assemble_S_L( strutLoads, struts, nodes ):
 
 #creates the global load vector from strut loads and node loads
 def assemble_S_G( nodeLoads, struts, nodes ):
-	#assemble node IDs form dict
-	NodeIDs = {}
-	for ID, node in nodes.iteritems():
-		NodeIDs[node['ID']] = ID
-
 	size = len(nodes) * 3
 	S_G = np.zeros(size)
 
 	#add node loads
 	for ID, load in nodeLoads.iteritems():
-		id = NodeIDs[load['Node']]
+		id = nodeNameToID(load['Node'], nodes)
 		Fx = load['Fx']
 		Fz = load['Fz']
 		M  = load['M']
@@ -82,7 +78,7 @@ def assemble_S_G( nodeLoads, struts, nodes ):
 
 	#add strut load vectors
 	for ID, strut in struts.iteritems():
-		id = NodeIDs[strut['StartNode']]
+		id = nodeNameToID(strut['StartNode'], nodes)
 
 		S_L = np.zeros(6)
 		if 'S_L' in strut:

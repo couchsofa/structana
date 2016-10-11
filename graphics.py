@@ -87,11 +87,6 @@ def renderSystem(nodes, struts, constraints, size):
 	offsetZ = 100
 	offsetX = 100
 
-	#assemble node IDs form dict
-	NodeIDs = {}
-	for ID, node in nodes.iteritems():
-		NodeIDs[node['ID']] = ID
-
 	screen = pygame.display.set_mode((640,480))
 	
 	for ID, node in nodes.iteritems():
@@ -103,8 +98,12 @@ def renderSystem(nodes, struts, constraints, size):
 		drawNode( screen, _x, _z, size)
 
 	for ID, const in constraints.iteritems():
-		_x = nodes[NodeIDs[const['Node']]]['X']
-		_z = nodes[NodeIDs[const['Node']]]['Z']
+		node = nodeNameToID(const['Node'], nodes)
+		_x = nodes[node]['X']
+
+		node = nodeNameToID(const['Node'], nodes)
+		_z = nodes[node]['Z']
+
 		_x += offsetX
 		_z += offsetZ
 
@@ -116,13 +115,15 @@ def renderSystem(nodes, struts, constraints, size):
 		drawSupport_3( screen, _x, _z, size )
 
 	for ID, strut in struts.iteritems():
-		_x1 = nodes[NodeIDs[strut['StartNode']]]['X']
-		_z1 = nodes[NodeIDs[strut['StartNode']]]['Z']
+		node = nodeNameToID(strut['StartNode'], nodes)
+		_x1 = nodes[node]['X']
+		_z1 = nodes[node]['Z']
 		_x1 += offsetX
 		_z1 += offsetZ
 
-		_x2 = nodes[NodeIDs[strut['EndNode']]]['X']
-		_z2 = nodes[NodeIDs[strut['EndNode']]]['Z']
+		node = nodeNameToID(strut['EndNode'], nodes)
+		_x2 = nodes[node]['X']
+		_z2 = nodes[node]['Z']
 		_x2 += offsetX
 		_z2 += offsetZ
 

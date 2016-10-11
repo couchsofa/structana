@@ -1,6 +1,7 @@
 import csv
 from input_templates import *
 import numpy as np
+from util import *
 
 def typeConv(_dict, _typeTemplate):
 	_typeTemplate = dict(_typeTemplate)
@@ -82,20 +83,15 @@ def checkNodeLoads(nodes, nodeLoads):
 			exit()
 
 def deleteFreeNodes(nodes, struts):
-	#assemble node IDs form dict
-	NodeIDs = {}
-	for ID, node in nodes.iteritems():
-		NodeIDs[ID] = node['ID']
-
 	freeNodes = []
 	for ID, node in nodes.iteritems():
 		isFreeNode = True
 		for strutID, strut in struts.iteritems():
-			if (strut['StartNode'] == NodeIDs[ID]) or (strut['EndNode'] == NodeIDs[ID]):
+			if (strut['StartNode'] == nodeIDtoName(ID, nodes)) or (strut['EndNode'] == nodeIDtoName(ID, nodes)):
 				isFreeNode = False
 				pass
 		if isFreeNode:
-			print('Node ' + str(NodeIDs[ID]) + ' is a free node and will be deleted.')
+			print('Node ' + str(nodeIDtoName(ID, nodes)) + ' is a free node and will be deleted.')
 			freeNodes.append(ID)
 
 	for freeNode in freeNodes:
@@ -117,33 +113,27 @@ def getStrutType(struts):
 
 #calculate the length of a strut
 def strutLength(strut, nodes):
-	#assemble node IDs form dict
-	NodeIDs = {}
-	for ID, node in nodes.iteritems():
-		NodeIDs[node['ID']] = ID
-
-	a0 = nodes[NodeIDs[strut['StartNode']]]['X']
-	a1 = nodes[NodeIDs[strut['StartNode']]]['Z']
+	node = nodeNameToID(strut['StartNode'], nodes)
+	a0 = nodes[node]['X']
+	a1 = nodes[node]['Z']
 	a  = np.array([a0, a1])
 
-	b0 = nodes[NodeIDs[strut['EndNode']]]['X']
-	b1 = nodes[NodeIDs[strut['EndNode']]]['Z']
+	node = nodeNameToID(strut['EndNode'], nodes)
+	b0 = nodes[node]['X']
+	b1 = nodes[node]['Z']
 	b  = np.array([b0, b1])
 
 	return np.linalg.norm(a - b)
 
 #calculate the local to global angle of a strut
 def strutAngle(strut, nodes):
-	#assemble node IDs form dict
-	NodeIDs = {}
-	for ID, node in nodes.iteritems():
-		NodeIDs[node['ID']] = ID
+	node = nodeNameToID(strut['StartNode'], nodes)
+	X0 = nodes[node]['X']
+	Z0 = nodes[node]['Z']
 
-	X0 = nodes[NodeIDs[strut['StartNode']]]['X']
-	Z0 = nodes[NodeIDs[strut['StartNode']]]['Z']
-
-	X1 = nodes[NodeIDs[strut['EndNode']]]['X']
-	Z1 = nodes[NodeIDs[strut['EndNode']]]['Z']
+	node = nodeNameToID(strut['EndNode'], nodes)
+	X1 = nodes[node]['X']
+	Z1 = nodes[node]['Z']
 	
 	v1 = np.array([X1 - X0, Z1 - Z0])
 	v2 = np.array([1, 0])

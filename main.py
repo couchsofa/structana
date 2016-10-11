@@ -45,8 +45,8 @@ def main():
 	calc_local_forces(nodes, struts, d)
 
 
-	writeDisplacements("test", d, nodes)
-	print d
+	writeDisplacements("displacement", d, nodes)
+	print nodes
 	
 #		parser = OptionParser(usage="usage: %prog [options] filename",
 #													version="%prog 1.0")
