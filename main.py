@@ -10,6 +10,7 @@ import graphics
 def main():
 	nodes = readCSV('Input_nodes.csv', nodesTypeTemplate)
 	struts = readCSV('Input_struts.csv', strutsTypeTemplate)
+	deleteFreeNodes(nodes, struts)
 	constraints = readCSV('Input_constraints.csv', constraintTypeTemplate)
 	strutLoads = readCSV('Input_strutLoads.csv', strutLoadTypeTemplate)
 	nodeLoads = readCSV('Input_nodeLoads.csv', nodeLoadTypeTemplate)
@@ -19,7 +20,6 @@ def main():
 	checkStrutLoads(struts, strutLoads)
 	checkNodeLoads(nodes, nodeLoads)
 
-	deleteFreeNodes(nodes, struts)
 	getStrutLength(nodes, struts)
 	getStrutAngle(nodes, struts)
 	getStrutType(struts)
@@ -31,6 +31,10 @@ def main():
 	apply_constraints(K, struts, nodes, constraints)
 
 	#graphics.renderSystem(nodes, struts, constraints, size=30)
+
+
+	print K
+
 
 	if sp.det(K) == 0:
 		print('System is kinematic (det(K)=0)!')
@@ -46,8 +50,7 @@ def main():
 
 
 	writeDisplacements("displacement", d, nodes)
-	print nodes
-	
+		
 #		parser = OptionParser(usage="usage: %prog [options] filename",
 #													version="%prog 1.0")
 #		parser.add_option("-x", "--xhtml",
