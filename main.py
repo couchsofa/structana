@@ -3,6 +3,7 @@ from input import *
 from output import *
 from matrices import *
 from load_vectors import *
+from solver import *
 import scipy.linalg as sp
 import numpy as np
 import graphics
@@ -44,7 +45,14 @@ def main():
 		print('System is kinematic (n < 3)!')
 		exit()
 
-	d = sp.solve(K,S_G)
+	d = solver(K, S_G, constraints, nodes)
+
+	print d
+	print S_G
+	print struts
+
+	for ID, strut in struts.iteritems():
+		print "Strut " + str(ID) + " is of type: " + strut['Type']
 
 	calc_local_forces(nodes, struts, d)
 
