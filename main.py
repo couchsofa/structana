@@ -47,12 +47,8 @@ def main():
 
 	d = solver(K, S_G, constraints, nodes)
 
-	print d
-	print S_G
-	print struts
-
-	for ID, strut in struts.iteritems():
-		print "Strut " + str(ID) + " is of type: " + strut['Type']
+	#for ID, strut in struts.iteritems():
+	#	print "Strut " + str(ID) + " is of type: " + strut['Type']
 
 	calc_local_forces(nodes, struts, d)
 

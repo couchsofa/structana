@@ -21,9 +21,16 @@ def readCSV(csvFile, typeTemplate):
 		reader = csv.DictReader(csvfile, delimiter = ';')
 
 		for row in reader:
-			if len(row) != len(typeTemplate):
-				print('Too many/few entries in a row in: ' + csvFile)
+
+			if len(row) > len(typeTemplate):
+				print('Too many entries in row ' + str(ID + 1) + ': ' + csvFile)
 				exit()
+
+			for key, value in row.iteritems():
+				if value is None:
+					print('Too fee entries in row ' + str(ID + 1) + ': ' + csvFile)
+					exit()
+
 			row = typeConv(row, typeTemplate)
 			_dict[ID] = row
 			ID += 1
