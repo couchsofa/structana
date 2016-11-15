@@ -237,9 +237,9 @@ def calc_local_forces(nodes, struts, d):
 		x3 = nodeNameToID(strut["EndNode"], nodes) * 3
 		x4 = x3 + 3
 
-		dg = np.append(d[x1:x2], d[x3:x4])
+		dl = np.append(d[x1:x2], d[x3:x4]*-1)
 
-		Sg = np.dot(K, dg)
+		Sg = np.dot(K, dl)
 		Sl = np.dot(r, Sg)
 
 		strut["Sl"] = Sl

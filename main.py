@@ -34,7 +34,7 @@ def main():
 	#graphics.renderSystem(nodes, struts, constraints, size=30)
 
 
-	print K
+	#print K
 
 
 	if sp.det(K) == 0:
@@ -50,8 +50,13 @@ def main():
 	#for ID, strut in struts.iteritems():
 	#	print "Strut " + str(ID) + " is of type: " + strut['Type']
 
+
 	calc_local_forces(nodes, struts, d)
 
+	print S_G
+
+	for ID, strut in struts.iteritems():
+		print strut['Sl']
 
 	writeDisplacements("displacement", d, nodes)
 		
