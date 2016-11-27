@@ -1,30 +1,6 @@
-import pygame
+import matplotlib.pyplot as plt
 import numpy as np
-
-red = (255,0,0)
-green = (0,255,0)
-blue = (0,0,255)
-darkBlue = (0,0,128)
-white = (255,255,255)
-black = (0,0,0)
-
-def getBounds(nodes):
-	_min = [0,0]
-	_max = [0,0]
-
-	for ID, node in nodes.iteritems():
-		#max
-		if node['X'] > _max[0]:
-			_max[0] = node['X']
-		if node['Z'] > _max[1]:
-			_max[1] = node['Z']
-		#min
-		if node['X'] < _min[0]:
-			_min[0] = node['X']
-		if node['Z'] < _min[1]:
-			_min[1] = node['Z']
-
-	return _min, _max
+from util import *
 
 def normalize(v):
 	norm = np.linalg.norm(v)
@@ -37,65 +13,88 @@ def rotate(v,theta):
 	s = np.sin(theta);
 	return (c*v[0] - s*v[1], s*v[0]+ c*v[1])
 
-def drawSupport_2(screen,x,y,size):
-	triangle = [(x,y), (x+size/2,y+size), (x-size/2,y+size), (x,y)]
+def drawBeam( start, end, size ):
+	width = size
 
-	pygame.draw.lines(screen, white, False, triangle, 2)
-	pygame.draw.circle(screen, white, (x,y), size/3, 0)
-
-def drawSupport_1(screen,x,y,size):
-	triangle = [(x,y), (x+size/2,y+size), (x-size/2,y+size), (x,y)]
-	line = [(x+size/2,y+size*1.1+2), (x-size/2,y+size*1.1+2)]
-
-	pygame.draw.lines(screen, white, False, triangle, 2)
-	pygame.draw.lines(screen, white, False, line, 2)
-	pygame.draw.circle(screen, white, (x,y), size/3, 0)
-
-def drawSupport_3(screen,x,y,size):
-	line = [(x,y+size/2), (x,y-size/2)]
-	diagonals = [[(x,y-size/2),(x-size/3,y-size/6)],
-							 [(x,y-size/6),(x-size/3,y+size/6)],
-							 [(x,y+size/6),(x-size/3,y+size/2)]]
-
-	pygame.draw.lines(screen, white, False, line, 2)
-	for lines in diagonals:
-		pygame.draw.lines(screen, white, False, lines, 2)
-
-def drawNode(screen,x,y,size):
-	pygame.draw.circle(screen, white, (int(x),int(y)), int(size/10), 0)
-
-def drawStrut(screen, start, end, size):
 	x1 = start[0]
 	y1 = start[1]
 	x2 = end[0]
 	y2 = end[1]
 
-	line = [start,end]
-	pygame.draw.lines(screen, white, False, line, 2)
+	beam = plt.plot([x1, x2], [y1, y2], '-', color="black", lw=width)
 
 	v = np.array([x2-x1,y2-y1])
 	v = normalize(v)
 	v = v * size/4
-	v = rotate(v, np.pi*3/4)
+	v = rotate(v, np.pi*-1/2)
 
-	start = (x1 + v[0], y1 + v[1])
-	end   = (x2 + v[0], y2 + v[1])
+	x1 = x1 + v[0]
+	y1 = y1 + v[1]
+	x2 = x2 + v[0]
+	y2 = y2 + v[1]
 
-	#draw_dashed_line(screen, start, end, size)
+	fibre = plt.plot([x1, x2], [y1, y2], '--', color="black")
 
-def renderSystem(nodes, struts, constraints, size):
-	offsetZ = 100
-	offsetX = 100
+	return [beam, fibre]
 
-	screen = pygame.display.set_mode((640,480))
+def drawNode( point, size, ax ):
+	size = float(size)/10
+
+	node = plt.Circle(point, size, color='black', clip_on=False)
+	ax.add_artist(node)
+
+def drawSupport_3(x,y,size):
+	width = size
+	size = float(size)/2
+
+	line_x = [x, x]
+	line_y = [y-size, y+size]
 	
+	diagonals = [[[x,x+size/1.5],[y+size,y+size/3]],
+							 [[x,x+size/1.5],[y+size/3,y-size/3]],
+							 [[x,x+size/1.5],[y-size/3,y-size]]]
+
+	plt.plot(line_x, line_y, '-', color="blue", lw=width )
+	for lines in diagonals:
+		plt.plot(lines[0], lines[1], '-', color="blue", lw=width)
+
+def drawSupport_2(x,y,size,ax):
+	width = size
+	size = float(size)/2
+	triangle_x = [x, x+size, x-size, x]
+	triangle_y = [y, y-size, y-size, y]
+
+	plt.plot(triangle_x, triangle_y, '-', color="blue", lw=width)
+	circle = plt.Circle((x,y), size/5, color="blue", clip_on=False)
+	ax.add_artist(circle)
+
+def drawSupport_1(x,y,size,ax):
+	width = size
+	size = float(size)/2
+	
+	triangle_x = [x, x+size, x-size, x]
+	triangle_y = [y, y-size, y-size, y]
+
+	line_x = [x+size, x-size]
+	line_y = [y-size*1.3, y-size*1.3]
+
+	plt.plot(triangle_x, triangle_y, '-', color="blue", lw=width)
+	plt.plot(line_x, line_y, '-', color="blue", lw=width)
+	circle = plt.Circle((x,y), size/5, color="blue", clip_on=False)
+	ax.add_artist(circle)
+
+def drawSystem(nodes, struts, constraints, size):
+
+	fig, ax = plt.subplots() 
+
+	#plt.xlabel('x label')
+	#plt.ylabel('y label')
+
 	for ID, node in nodes.iteritems():
 		_x = node['X']
 		_z = node['Z']
-		_x += offsetX
-		_z += offsetZ
 
-		drawNode( screen, _x, _z, size)
+		drawNode((_x,_z), size, ax)
 
 	for ID, const in constraints.iteritems():
 		node = nodeNameToID(const['Node'], nodes)
@@ -104,30 +103,31 @@ def renderSystem(nodes, struts, constraints, size):
 		node = nodeNameToID(const['Node'], nodes)
 		_z = nodes[node]['Z']
 
-		_x += offsetX
-		_z += offsetZ
-
 		x = const['x']
 		z = const['z']
 		r = const['r']
 
 		#if x and z and r:
-		drawSupport_3( screen, _x, _z, size )
+		drawSupport_3(_x, _z, size)
 
 	for ID, strut in struts.iteritems():
 		node = nodeNameToID(strut['StartNode'], nodes)
 		_x1 = nodes[node]['X']
 		_z1 = nodes[node]['Z']
-		_x1 += offsetX
-		_z1 += offsetZ
 
 		node = nodeNameToID(strut['EndNode'], nodes)
 		_x2 = nodes[node]['X']
 		_z2 = nodes[node]['Z']
-		_x2 += offsetX
-		_z2 += offsetZ
 
-		drawStrut(screen, (_x1,_z1), (_x2,_z2), size)
+		drawBeam((_x1,_z1), (_x2,_z2), size)
+	
 
-	while 1:
-		pygame.display.update()
+	plt.title("System")
+	ax.set_aspect('equal')
+	
+	x1,x2,y1,y2 = plt.axis()
+	lim 				= ax.get_xlim()
+	offset			= abs(lim[1]/10)
+	plt.axis((x1-offset,x2+offset,y1-offset,y2+offset))
+
+	plt.show()

@@ -6,7 +6,7 @@ from load_vectors import *
 from solver import *
 import scipy.linalg as sp
 import numpy as np
-import graphics
+from graphics import *
 
 def main():
 	nodes = readCSV('Input_nodes.csv', nodesTypeTemplate)
@@ -59,6 +59,8 @@ def main():
 		print strut['Sl']
 
 	writeDisplacements("displacement", d, nodes)
+
+	drawSystem(nodes, struts, constraints, size=2)
 		
 #		parser = OptionParser(usage="usage: %prog [options] filename",
 #													version="%prog 1.0")
