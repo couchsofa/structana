@@ -191,7 +191,6 @@ def drawSystem(nodes, struts, constraints, size):
 		elif r:
 			drawSupport_4(_x,_z,size,ax)
 
-
 	for ID, strut in struts.iteritems():
 		node = nodeNameToID(strut['StartNode'], nodes)
 		_x1 = nodes[node]['X']
@@ -208,7 +207,14 @@ def drawSystem(nodes, struts, constraints, size):
 	ax.set_aspect('equal')
 	
 	x1,x2,y1,y2 = plt.axis()
-	lim 				= ax.get_xlim()
+	lim_x				= ax.get_xlim()
+	lim_y				= ax.get_ylim()
+
+	if abs(lim_x[1]) > abs(lim_y[1]):
+		lim = lim_x
+	else:
+		lim = lim_y
+
 	offset			= abs(lim[1]/10)
 	plt.axis((x1-offset,x2+offset,y1-offset,y2+offset))
 
