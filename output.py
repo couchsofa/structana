@@ -5,7 +5,7 @@ from util import *
 def writeDisplacements(filename, d, nodes):
 	fieldnames = ["Node", "x", "z", "r"]
 	
-	with open(filename + '.csv', 'w') as csvfile:
+	with open(filename, 'w') as csvfile:
 		writer = csv.writer(csvfile, delimiter = ';')
 		writer.writerow(fieldnames)
 

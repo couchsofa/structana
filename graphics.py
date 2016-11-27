@@ -143,10 +143,8 @@ def getBounds(nodes):
 
 	return _min, _max, mid
 
-def drawSystem(nodes, struts, constraints, size):
-
+def drawSystem(nodes, struts, constraints, size, savePlot):
 	_min, _max, mid = getBounds(nodes)
-
 	fig, ax = plt.subplots() 
 
 	#plt.xlabel('x label')
@@ -202,10 +200,6 @@ def drawSystem(nodes, struts, constraints, size):
 
 		drawBeam((_x1,_z1), (_x2,_z2), size)
 	
-
-	plt.title("System")
-	ax.set_aspect('equal')
-	
 	x1,x2,y1,y2 = plt.axis()
 	lim_x				= ax.get_xlim()
 	lim_y				= ax.get_ylim()
@@ -215,7 +209,12 @@ def drawSystem(nodes, struts, constraints, size):
 	else:
 		lim = lim_y
 
-	offset			= abs(lim[1]/10)
+	offset = abs(lim[1]/10)
 	plt.axis((x1-offset,x2+offset,y1-offset,y2+offset))
+	plt.title("System")
+	ax.set_aspect('equal')
 
-	plt.show()
+	if savePlot != False:
+		plt.savefig(savePlot, bbox_inches='tight')
+	else:
+		plt.show()

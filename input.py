@@ -41,7 +41,7 @@ def genTemplate(filename, typeTemplate):
 	fieldnames = []
 	for key, value in typeTemplate:
 		fieldnames.append(key)
-	with open(filename + '.csv', 'w') as csvfile:
+	with open(filename, 'w') as csvfile:
 		writer = csv.writer(csvfile, delimiter = ';')
 		writer.writerow(fieldnames)
 

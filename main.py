@@ -1,4 +1,4 @@
-#from optparse import OptionParser
+from optparse import OptionParser
 from input import *
 from output import *
 from matrices import *
@@ -8,13 +8,95 @@ import scipy.linalg as sp
 import numpy as np
 from graphics import *
 
+version = 0.1
+
 def main():
-	nodes = readCSV('Input_nodes.csv', nodesTypeTemplate)
-	struts = readCSV('Input_struts.csv', strutsTypeTemplate)
+
+	parser = OptionParser(usage="usage: %prog [options] filename", version="%prog " + str(version))
+
+################################################################################
+#		Input files 																															 #
+################################################################################
+
+	parser.add_option("-N", "--NodeFile",
+										action="store",
+										dest="nodeFile",
+										default='Input_nodes.csv',
+										help="CSV file with node definitions")
+
+	parser.add_option("-S", "--StrutFile",
+										action="store",
+										dest="strutFile",
+										default='Input_struts.csv',
+										help="CSV file with strut definitions")
+
+	parser.add_option("-C", "--ConstraintFile",
+										action="store",
+										dest="constFile",
+										default='Input_constraints.csv',
+										help="CSV file with constraint definitions")
+
+	parser.add_option("-L", "--StrutLoadFile",
+										action="store",
+										dest="strutLoadFile",
+										default='Input_strutLoads.csv',
+										help="CSV file with strut load definitions")
+
+	parser.add_option("-F", "--NodeLoadFile",
+										action="store",
+										dest="nodeLoadFile",
+										default='Input_nodeLoads.csv',
+										help="CSV file with node load definitions")
+
+	parser.add_option("-T",
+										action="store_true",
+										dest="genTemplates",
+										help="Generate csv input template files")
+
+################################################################################
+#		Output files 																															 #
+################################################################################
+
+	parser.add_option("-D", "--DisplacementVectorFile",
+										action="store",
+										dest="displacementVectorFile",
+										default='displacement.csv',
+										help="Destination path to save the displacement vector csv file")
+
+################################################################################
+#		graphics																																	 #
+################################################################################
+
+	parser.add_option("-s", "--Scale",
+										action="store",
+										dest="scale",
+										default=2.0,
+										help="Scales plot elements")
+
+	parser.add_option("-P", "--SavePlot",
+										action="store",
+										dest="savePlot",
+										default=False,
+										help="Destination path to save the system plot. Supported filetypes: .png, .pdf")
+
+################################################################################
+
+	(options, args) = parser.parse_args()
+
+	if options.genTemplates:
+		genTemplate('nodesTemplate.csv', nodesTypeTemplate)
+		genTemplate('strutsTemplate.csv', strutsTypeTemplate)
+		genTemplate('constraintTemplate.csv', constraintTypeTemplate)
+		genTemplate('strutLoadTemplate.csv', strutLoadTypeTemplate)
+		genTemplate('nodeLoadTemplate.csv', nodeLoadTypeTemplate)
+		exit()
+
+	nodes = readCSV(options.nodeFile, nodesTypeTemplate)
+	struts = readCSV(options.strutFile, strutsTypeTemplate)
 	deleteFreeNodes(nodes, struts)
-	constraints = readCSV('Input_constraints.csv', constraintTypeTemplate)
-	strutLoads = readCSV('Input_strutLoads.csv', strutLoadTypeTemplate)
-	nodeLoads = readCSV('Input_nodeLoads.csv', nodeLoadTypeTemplate)
+	constraints = readCSV(options.constFile, constraintTypeTemplate)
+	strutLoads = readCSV(options.strutLoadFile, strutLoadTypeTemplate)
+	nodeLoads = readCSV(options.nodeLoadFile, nodeLoadTypeTemplate)
 
 	checkStrutNodes(nodes, struts)
 	checkConstraintNodes(nodes, constraints)
@@ -31,12 +113,6 @@ def main():
 	K = assemble_global_K_I(nodes, struts)
 	apply_constraints(K, struts, nodes, constraints)
 
-	#graphics.renderSystem(nodes, struts, constraints, size=30)
-
-
-	#print K
-
-
 	if sp.det(K) == 0:
 		print('System is kinematic (det(K)=0)!')
 		exit()
@@ -47,20 +123,11 @@ def main():
 
 	d = solver(K, S_G, constraints, nodes)
 
-	#for ID, strut in struts.iteritems():
-	#	print "Strut " + str(ID) + " is of type: " + strut['Type']
-
-
 	calc_local_forces(nodes, struts, d)
 
-	print S_G
+	writeDisplacements(options.displacementVectorFile, d, nodes)
 
-	for ID, strut in struts.iteritems():
-		print strut['Sl']
-
-	writeDisplacements("displacement", d, nodes)
-
-	drawSystem(nodes, struts, constraints, size=2)
+	drawSystem(nodes, struts, constraints, options.scale, options.savePlot)
 		
 #		parser = OptionParser(usage="usage: %prog [options] filename",
 #													version="%prog 1.0")
