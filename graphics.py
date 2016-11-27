@@ -43,16 +43,22 @@ def drawNode( point, size, ax ):
 	node = plt.Circle(point, size, color='black', clip_on=False)
 	ax.add_artist(node)
 
-def drawSupport_3(x,y,size):
+def drawSupport_3(x,y,orientation,size):
 	width = size
 	size = float(size)/2
 
 	line_x = [x, x]
 	line_y = [y-size, y+size]
+
+	if orientation == 'r':
+		diagonals = [[[x,x+size/1.5],[y+size,y+size/3]],
+								 [[x,x+size/1.5],[y+size/3,y-size/3]],
+								 [[x,x+size/1.5],[y-size/3,y-size]]]
 	
-	diagonals = [[[x,x+size/1.5],[y+size,y+size/3]],
-							 [[x,x+size/1.5],[y+size/3,y-size/3]],
-							 [[x,x+size/1.5],[y-size/3,y-size]]]
+	else:
+		diagonals = [[[x,x-size/1.5],[y+size,y+size/3]],
+								 [[x,x-size/1.5],[y+size/3,y-size/3]],
+								 [[x,x-size/1.5],[y-size/3,y-size]]]
 
 	plt.plot(line_x, line_y, '-', color="blue", lw=width )
 	for lines in diagonals:
@@ -68,7 +74,7 @@ def drawSupport_2(x,y,size,ax):
 	circle = plt.Circle((x,y), size/5, color="blue", clip_on=False)
 	ax.add_artist(circle)
 
-def drawSupport_1(x,y,size,ax):
+def drawSupport_1_z(x,y,size,ax):
 	width = size
 	size = float(size)/2
 	
@@ -77,13 +83,69 @@ def drawSupport_1(x,y,size,ax):
 
 	line_x = [x+size, x-size]
 	line_y = [y-size*1.3, y-size*1.3]
+	line_y = [y-size*1.3, y-size*1.3]
 
 	plt.plot(triangle_x, triangle_y, '-', color="blue", lw=width)
 	plt.plot(line_x, line_y, '-', color="blue", lw=width)
 	circle = plt.Circle((x,y), size/5, color="blue", clip_on=False)
 	ax.add_artist(circle)
 
+def drawSupport_1_x(x,y,orientation,size,ax):
+	width = size
+	size = float(size)/2
+
+	if orientation == 'r':
+		triangle_x = [x, x+size, x+size, x]
+		triangle_y = [y, y+size, y-size, y]
+
+		line_x = [x+size*1.3, x+size*1.3]
+		line_y = [y+size, y-size]
+
+	else:
+		triangle_x = [x, x-size, x-size, x]
+		triangle_y = [y, y+size, y-size, y]
+
+		line_x = [x-size*1.3, x-size*1.3]
+		line_y = [y+size, y-size]
+
+	plt.plot(triangle_x, triangle_y, '-', color="blue", lw=width)
+	plt.plot(line_x, line_y, '-', color="blue", lw=width)
+	circle = plt.Circle((x,y), size/5, color="blue", clip_on=False)
+	ax.add_artist(circle)
+
+def drawSupport_4(x,y,size,ax):
+	size = float(size)/2
+
+	circle = plt.Circle((x,y), size, color="blue", fill=False, clip_on=False)
+	ax.add_artist(circle)
+
+def getBounds(nodes):
+	_min = [0,0]
+	_max = [0,0]
+
+	for ID, node in nodes.iteritems():
+		#max
+		if node['X'] > _max[0]:
+			_max[0] = node['X']
+		if node['Z'] > _max[1]:
+			_max[1] = node['Z']
+		#min
+		if node['X'] < _min[0]:
+			_min[0] = node['X']
+		if node['Z'] < _min[1]:
+			_min[1] = node['Z']
+
+	if _min[0] < 0:
+		__min = abs(_min[0])
+		mid = (__min + _max[0])/2
+	else:
+		mid = (_max[0] - _min[0])/2
+
+	return _min, _max, mid
+
 def drawSystem(nodes, struts, constraints, size):
+
+	_min, _max, mid = getBounds(nodes)
 
 	fig, ax = plt.subplots() 
 
@@ -107,8 +169,28 @@ def drawSystem(nodes, struts, constraints, size):
 		z = const['z']
 		r = const['r']
 
-		#if x and z and r:
-		drawSupport_3(_x, _z, size)
+		if _x < mid:
+			orientation = 'l'
+		else:
+			orientation = 'r'
+		
+		if x and z and r:
+			drawSupport_3(_x, _z, orientation, size)
+		elif x and z:
+			drawSupport_2(_x, _z, size, ax)
+		elif x and r:
+			drawSupport_1_x(_x, _z, orientation, size, ax)
+			drawSupport_4(_x,_z,size,ax)
+		elif z and r:
+			drawSupport_1_z(_x, _z, size, ax)
+			drawSupport_4(_x,_z,size,ax)
+		elif z:
+			drawSupport_1_z(_x, _z, size, ax)
+		elif x:
+			drawSupport_1_x(_x, _z, orientation, size, ax)
+		elif r:
+			drawSupport_4(_x,_z,size,ax)
+
 
 	for ID, strut in struts.iteritems():
 		node = nodeNameToID(strut['StartNode'], nodes)
