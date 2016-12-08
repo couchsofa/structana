@@ -4,6 +4,11 @@ import matplotlib.patches as patches
 import numpy as np
 from util import *
 
+def midPoint( (x1, y1), (x2, y2) ):
+	x = x1 + (x2 - x1)/2
+	y = y1 + (y2 - y1)/2
+	return (x, y)
+
 def normalize(v):
 	norm = np.linalg.norm(v)
 	if norm == 0: 
@@ -28,7 +33,7 @@ def drawBeam( start, end, id, size, ax ):
 	v = np.array([x2-x1,y2-y1])
 	v = normalize(v)
 	v = v * size/4
-	v = rotate(v, np.pi*-1/2)
+	v = rotate(v, np.pi*-0.5)
 
 	x1 = x1 + v[0]
 	y1 = y1 + v[1]
@@ -37,8 +42,9 @@ def drawBeam( start, end, id, size, ax ):
 
 	fibre = plt.plot([x1, x2], [y1, y2], '--', color="black")
 
-	x = x1 + (x2 - x1)/2 + v[0] * 5
-	y = y1 + (y2 - y1)/2 + v[1] * 5
+	mid = midPoint((x1,y1),(x2,y2))
+	x = mid[0] + v[0] * 5
+	y = mid[1] + v[1] * 5
 	ax.text(x, y, id, bbox=dict(ec='black', fill=None))
 
 	return [beam, fibre]
@@ -138,6 +144,10 @@ def bezier(verts, size, ax):
  
 	patch = patches.PathPatch(path, edgecolor='yellow', facecolor='none', lw=width)
 	ax.add_patch(patch)
+
+	#debug
+	xs, ys = zip(*verts)
+	ax.plot(xs, ys, 'x--', lw=2, color='red', ms=10)
 
 def getBounds(nodes):
 	_min = [0,0]
@@ -240,6 +250,7 @@ def drawSystem(nodes, struts, constraints, d, size, savePlot):
 		_z = node['Z'] + _d[i][1]
 		node['Xd'] = _x
 		node['Zd'] = _z
+		node['rd'] = _d[i][2]
 
 		drawNode((_x,_z), size, 'yellow', ax)
 
@@ -249,19 +260,37 @@ def drawSystem(nodes, struts, constraints, d, size, savePlot):
 
 	for ID, strut in struts.iteritems():
 		node = nodeNameToID(strut['StartNode'], nodes)
-		_x1 = nodes[node]['Xd']
-		_z1 = nodes[node]['Zd']
+		_x1d = nodes[node]['Xd']
+		_x1  = nodes[node]['X']
+		_z1d = nodes[node]['Zd']
+		_z1  = nodes[node]['Z']
+		_rd1 = nodes[node]['rd']
 
 		node = nodeNameToID(strut['EndNode'], nodes)
-		_x2 = nodes[node]['Xd']
-		_z2 = nodes[node]['Zd']
+		_x2d = nodes[node]['Xd']
+		_x2  = nodes[node]['X']
+		_z2d = nodes[node]['Zd']
+		_z2  = nodes[node]['Z']
+		_rd2 = nodes[node]['rd']
 
-		verts = [ (_x1, _z1),
-							(_x1, _z2),
-							(_x2, _z1),
-							(_x2, _z2)]
+		mid = midPoint( (_x1, _z1), (_x2, _z2) )
+		v = [_x2 - mid[0], _z2 - mid[1]]
+		v = rotate(v,_rd1)
+		vert2 = (_x1d + v[0], _z1d + v[1])
+
+		mid = midPoint((_x1, _z1), (_x2, _z2) )
+		v = [(_x2 - mid[0]) * -1, (_z2 - mid[1]) * -1]
+		v = rotate(v,_rd2)
+		vert3 = (_x2d + v[0], _z2d + v[1])
+
+		verts = [ (_x1d, _z1d),
+							vert2,
+							vert3,
+							(_x2d, _z2d)]
 
 		bezier(verts, size, ax)
+
+	##############################################################################
 
 	x1,x2,y1,y2 = plt.axis()
 	lim_x				= ax.get_xlim()
