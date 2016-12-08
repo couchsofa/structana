@@ -72,10 +72,6 @@ def assemble_S_G( nodeLoads, struts, nodes ):
 		for i in range(3):
 			S_G[id*3 + i] += v[i]
 
-	#change sign
-	#sign = [-1, -1, -1, 1, 1, 1]
-	#S_G = S_G * sign
-
 	#add strut load vectors
 	for ID, strut in struts.iteritems():
 		id = nodeNameToID(strut['StartNode'], nodes)
@@ -88,7 +84,7 @@ def assemble_S_G( nodeLoads, struts, nodes ):
 		alpha = strut['alpha']
 		v = rot(alpha).dot(S_L)
 		for i in range(6):
-			S_G[id*3 + i] += v[i]
+			S_G[id*3 + i] += v[i] * -1
 
 	return S_G
 

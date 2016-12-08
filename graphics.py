@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+from matplotlib.path import Path
+import matplotlib.patches as patches
 import numpy as np
 from util import *
 
@@ -13,7 +15,7 @@ def rotate(v,theta):
 	s = np.sin(theta);
 	return (c*v[0] - s*v[1], s*v[0]+ c*v[1])
 
-def drawBeam( start, end, size ):
+def drawBeam( start, end, id, size, ax ):
 	width = size
 
 	x1 = start[0]
@@ -35,12 +37,16 @@ def drawBeam( start, end, size ):
 
 	fibre = plt.plot([x1, x2], [y1, y2], '--', color="black")
 
+	x = x1 + (x2 - x1)/2 + v[0] * 5
+	y = y1 + (y2 - y1)/2 + v[1] * 5
+	ax.text(x, y, id, bbox=dict(ec='black', fill=None))
+
 	return [beam, fibre]
 
-def drawNode( point, size, ax ):
+def drawNode( point, size, color, ax ):
 	size = float(size)/10
 
-	node = plt.Circle(point, size, color='black', clip_on=False)
+	node = plt.Circle(point, size, color=color, clip_on=False)
 	ax.add_artist(node)
 
 def drawSupport_3(x,y,orientation,size):
@@ -119,6 +125,20 @@ def drawSupport_4(x,y,size,ax):
 	circle = plt.Circle((x,y), size, color="blue", fill=False, clip_on=False)
 	ax.add_artist(circle)
 
+def bezier(verts, size, ax):
+	width = size
+
+	codes = [Path.MOVETO,
+					 Path.CURVE4,
+					 Path.CURVE4,
+					 Path.CURVE4,
+					]
+
+	path = Path(verts, codes)
+ 
+	patch = patches.PathPatch(path, edgecolor='yellow', facecolor='none', lw=width)
+	ax.add_patch(patch)
+
 def getBounds(nodes):
 	_min = [0,0]
 	_max = [0,0]
@@ -143,18 +163,24 @@ def getBounds(nodes):
 
 	return _min, _max, mid
 
-def drawSystem(nodes, struts, constraints, size, savePlot):
+def drawSystem(nodes, struts, constraints, d, size, savePlot):
 	_min, _max, mid = getBounds(nodes)
 	fig, ax = plt.subplots() 
 
 	#plt.xlabel('x label')
 	#plt.ylabel('y label')
 
+	# Nodes
+
 	for ID, node in nodes.iteritems():
 		_x = node['X']
 		_z = node['Z']
+		id = node['ID']
 
-		drawNode((_x,_z), size, ax)
+		drawNode((_x,_z), size, 'black', ax)
+		ax.text(_x - size, _z - size, id)
+
+	# Constraints
 
 	for ID, const in constraints.iteritems():
 		node = nodeNameToID(const['Node'], nodes)
@@ -189,6 +215,8 @@ def drawSystem(nodes, struts, constraints, size, savePlot):
 		elif r:
 			drawSupport_4(_x,_z,size,ax)
 
+	# Struts
+
 	for ID, strut in struts.iteritems():
 		node = nodeNameToID(strut['StartNode'], nodes)
 		_x1 = nodes[node]['X']
@@ -198,8 +226,43 @@ def drawSystem(nodes, struts, constraints, size, savePlot):
 		_x2 = nodes[node]['X']
 		_z2 = nodes[node]['Z']
 
-		drawBeam((_x1,_z1), (_x2,_z2), size)
+		drawBeam((_x1,_z1), (_x2,_z2), nodes[node]['ID'], size, ax)
 	
+	##############################################################################
+
+	# Displaced nodes
+
+	_d = [d[n:n+3] for n in range(0, len(d), 3)]
+
+	i = 0
+	for ID, node in nodes.iteritems():
+		_x = node['X'] + _d[i][0]
+		_z = node['Z'] + _d[i][1]
+		node['Xd'] = _x
+		node['Zd'] = _z
+
+		drawNode((_x,_z), size, 'yellow', ax)
+
+		i += 1
+
+	# Displaced struts
+
+	for ID, strut in struts.iteritems():
+		node = nodeNameToID(strut['StartNode'], nodes)
+		_x1 = nodes[node]['Xd']
+		_z1 = nodes[node]['Zd']
+
+		node = nodeNameToID(strut['EndNode'], nodes)
+		_x2 = nodes[node]['Xd']
+		_z2 = nodes[node]['Zd']
+
+		verts = [ (_x1, _z1),
+							(_x1, _z2),
+							(_x2, _z1),
+							(_x2, _z2)]
+
+		bezier(verts, size, ax)
+
 	x1,x2,y1,y2 = plt.axis()
 	lim_x				= ax.get_xlim()
 	lim_y				= ax.get_ylim()

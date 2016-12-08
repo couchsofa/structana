@@ -12,7 +12,7 @@ version = 0.1
 
 def main():
 
-	parser = OptionParser(usage="usage: %prog [options] filename", version="%prog " + str(version))
+	parser = OptionParser(usage="usage: %prog [options]", version="%prog " + str(version))
 
 ################################################################################
 #		Input files 																															 #
@@ -110,6 +110,8 @@ def main():
 
 	S_G = assemble_S_G(nodeLoads, struts, nodes)
 
+	print S_G
+
 	K = assemble_global_K_I(nodes, struts)
 	apply_constraints(K, struts, nodes, constraints)
 
@@ -123,11 +125,13 @@ def main():
 
 	d = solver(K, S_G, constraints, nodes)
 
+	print d
+
 	calc_local_forces(nodes, struts, d)
 
 	writeDisplacements(options.displacementVectorFile, d, nodes)
 
-	drawSystem(nodes, struts, constraints, options.scale, options.savePlot)
+	drawSystem(nodes, struts, constraints, d, options.scale, options.savePlot)
 		
 #		parser = OptionParser(usage="usage: %prog [options] filename",
 #													version="%prog 1.0")
