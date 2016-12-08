@@ -45,7 +45,7 @@ def drawBeam( start, end, id, size, ax ):
 	mid = midPoint((x1,y1),(x2,y2))
 	x = mid[0] + v[0] * 5
 	y = mid[1] + v[1] * 5
-	ax.text(x, y, id, bbox=dict(ec='black', fill=None))
+	ax.text(x, y, id, bbox=dict(boxstyle='round,pad=0.3', ec='black', fc='w'))
 
 	return [beam, fibre]
 
@@ -146,8 +146,8 @@ def bezier(verts, size, ax):
 	ax.add_patch(patch)
 
 	#debug
-	xs, ys = zip(*verts)
-	ax.plot(xs, ys, 'x--', lw=2, color='red', ms=10)
+	#xs, ys = zip(*verts)
+	#ax.plot(xs, ys, 'x--', lw=2, color='red', ms=10)
 
 def getBounds(nodes):
 	_min = [0,0]
@@ -173,25 +173,18 @@ def getBounds(nodes):
 
 	return _min, _max, mid
 
-def drawSystem(nodes, struts, constraints, d, size, savePlot):
-	_min, _max, mid = getBounds(nodes)
-	fig, ax = plt.subplots() 
-
-	#plt.xlabel('x label')
-	#plt.ylabel('y label')
-
-	# Nodes
-
+def drawNodes(nodes, size, ax):
 	for ID, node in nodes.iteritems():
 		_x = node['X']
 		_z = node['Z']
 		id = node['ID']
 
 		drawNode((_x,_z), size, 'black', ax)
-		ax.text(_x - size, _z - size, id)
+		ax.text(_x - size, _z - size, id, bbox=dict(boxstyle='round,pad=0.2',
+																											ec='white',
+																											fc='white'))
 
-	# Constraints
-
+def drawConstraints(constraints, nodes, mid, size, ax):
 	for ID, const in constraints.iteritems():
 		node = nodeNameToID(const['Node'], nodes)
 		_x = nodes[node]['X']
@@ -225,8 +218,7 @@ def drawSystem(nodes, struts, constraints, d, size, savePlot):
 		elif r:
 			drawSupport_4(_x,_z,size,ax)
 
-	# Struts
-
+def drawStruts(struts, nodes, size, ax):
 	for ID, strut in struts.iteritems():
 		node = nodeNameToID(strut['StartNode'], nodes)
 		_x1 = nodes[node]['X']
@@ -237,11 +229,8 @@ def drawSystem(nodes, struts, constraints, d, size, savePlot):
 		_z2 = nodes[node]['Z']
 
 		drawBeam((_x1,_z1), (_x2,_z2), nodes[node]['ID'], size, ax)
-	
-	##############################################################################
 
-	# Displaced nodes
-
+def drawDisplacedNodes(d, nodes, size, ax):
 	_d = [d[n:n+3] for n in range(0, len(d), 3)]
 
 	i = 0
@@ -251,13 +240,10 @@ def drawSystem(nodes, struts, constraints, d, size, savePlot):
 		node['Xd'] = _x
 		node['Zd'] = _z
 		node['rd'] = _d[i][2]
-
+		i += 1
 		drawNode((_x,_z), size, 'yellow', ax)
 
-		i += 1
-
-	# Displaced struts
-
+def drawDisplacedStruts(struts, nodes, size, ax):
 	for ID, strut in struts.iteritems():
 		node = nodeNameToID(strut['StartNode'], nodes)
 		_x1d = nodes[node]['Xd']
@@ -290,18 +276,44 @@ def drawSystem(nodes, struts, constraints, d, size, savePlot):
 
 		bezier(verts, size, ax)
 
-	##############################################################################
-
-	x1,x2,y1,y2 = plt.axis()
-	lim_x				= ax.get_xlim()
-	lim_y				= ax.get_ylim()
+def getPlotLimit(ax):
+	lim_x = ax.get_xlim()
+	lim_y = ax.get_ylim()
 
 	if abs(lim_x[1]) > abs(lim_y[1]):
-		lim = lim_x
+		return lim_x
 	else:
-		lim = lim_y
+		return lim_y
 
+def drawSystem(nodes, struts, constraints, d, size, savePlot):
+	_min, _max, mid = getBounds(nodes)
+	fig, ax = plt.subplots() 
+
+	#plt.xlabel('x label')
+	#plt.ylabel('y label')
+
+	# Nodes
+	drawNodes(nodes, size, ax)
+
+	# Constraints
+	drawConstraints(constraints, nodes, mid, size, ax)
+
+	# Struts
+	drawStruts(struts, nodes, size, ax)
+	
+	##############################################################################
+
+	# Displaced nodes
+	drawDisplacedNodes(d, nodes, size, ax)
+
+	# Displaced struts
+	drawDisplacedStruts(struts, nodes, size, ax)
+
+	##############################################################################
+
+	lim = getPlotLimit(ax)
 	offset = abs(lim[1]/10)
+	x1,x2,y1,y2 = plt.axis()
 	plt.axis((x1-offset,x2+offset,y1-offset,y2+offset))
 	plt.title("System")
 	ax.set_aspect('equal')
