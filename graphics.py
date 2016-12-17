@@ -4,6 +4,8 @@ import matplotlib.patches as patches
 import numpy as np
 from util import *
 
+loadScale = 0.01
+
 def midPoint( (x1, y1), (x2, y2) ):
 	x = x1 + (x2 - x1)/2
 	y = y1 + (y2 - y1)/2
@@ -45,7 +47,7 @@ def drawBeam( start, end, id, size, ax ):
 	mid = midPoint((x1,y1),(x2,y2))
 	x = mid[0] + v[0] * 5
 	y = mid[1] + v[1] * 5
-	ax.text(x, y, id, bbox=dict(boxstyle='round,pad=0.3', ec='black', fc='w'))
+	ax.text(x, y, id, bbox=dict(boxstyle='round,pad=0.3', ec='black', fc='w'), ha='center')
 
 	return [beam, fibre]
 
@@ -228,7 +230,7 @@ def drawStruts(struts, nodes, size, ax):
 		_x2 = nodes[node]['X']
 		_z2 = nodes[node]['Z']
 
-		drawBeam((_x1,_z1), (_x2,_z2), nodes[node]['ID'], size, ax)
+		drawBeam((_x1,_z1), (_x2,_z2), strut['ID'], size, ax)
 
 def drawDisplacedNodes(d, nodes, size, ax):
 	_d = [d[n:n+3] for n in range(0, len(d), 3)]
@@ -285,7 +287,7 @@ def getPlotLimit(ax):
 	else:
 		return lim_y
 
-def drawSystem(nodes, struts, constraints, d, size, savePlot):
+def drawSystem(nodes, struts, constraints, strutLoads, d, size, savePlot):
 	_min, _max, mid = getBounds(nodes)
 	fig, ax = plt.subplots() 
 
@@ -311,11 +313,72 @@ def drawSystem(nodes, struts, constraints, d, size, savePlot):
 
 	##############################################################################
 
+	# loads
+	for ID, strut in struts.iteritems():
+		width = size
+		load = getStrutLoad(strut['ID'], strutLoads)
+		x1   = load['x1']
+		x2   = load['x2']
+		F    = load['F'] * loadScale
+		M    = load['M'] * loadScale
+		q    = load['q'] * loadScale
+		Type = load['Type']
+
+		node = nodeNameToID(strut['StartNode'], nodes)
+		_x1 = nodes[node]['X']
+		_z1 = nodes[node]['Z']
+
+		node = nodeNameToID(strut['EndNode'], nodes)
+		_x2 = nodes[node]['X']
+		_z2 = nodes[node]['Z']
+		
+		v = np.array([_x2-_x1,_z2-_z1])
+		v = normalize(v)
+		h = rotate(v, np.pi*0.5)
+
+		if Type == 1:
+			p1 = (_x1, _z1)
+			
+			v = np.array([x1, 0])
+			v = rotate(v, np.deg2rad(strut['alpha']*-1))
+			p12 = (p1[0] + v[0], p1[1] + v[1])
+			
+			vq = np.array([0, q])
+			vq = rotate(vq, np.deg2rad(strut['alpha']*-1))
+			p2 = (p12[0] + vq[0], p12[1] + vq[1])
+
+			p4 = (_x2, _z2)
+
+			v = np.array([x2, 0])
+			v = rotate(v, np.deg2rad(strut['alpha']*-1))
+			p43 = (p4[0] - v[0], p4[1] - v[1])
+			
+			p3 = (p43[0] + vq[0], p43[1] + vq[1])
+
+			px = [p1[0], p2[0], p3[0], p4[0]]
+			pz = [p1[1], p2[1], p3[1], p4[1]]
+
+			vq = np.array([0, q-(size/4.0)])
+			vq = rotate(vq, np.deg2rad(strut['alpha']*-1))
+
+			ax.arrow(p2[0],p2[1], (vq[0]*-1), (vq[1]*-1), head_width=size/4.0, head_length=size/4.0, fc='blue', ec='blue')
+			ax.arrow(p3[0],p3[1], (vq[0]*-1), (vq[1]*-1), head_width=size/4.0, head_length=size/4.0, fc='blue', ec='blue')
+
+			plt.plot(px, pz, '-', color="blue", lw=width)
+
+
+	##############################################################################
+
+	# Extend plot for margin
 	lim = getPlotLimit(ax)
 	offset = abs(lim[1]/10)
 	x1,x2,y1,y2 = plt.axis()
 	plt.axis((x1-offset,x2+offset,y1-offset,y2+offset))
+	
+	# Label
 	plt.title("System")
+	
+	# Same scale on both axes
 	ax.set_aspect('equal')
 
 	if savePlot != False:

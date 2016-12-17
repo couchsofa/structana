@@ -126,12 +126,13 @@ def main():
 	d = solver(K, S_G, constraints, nodes)
 
 	print d
+	print K
 
 	calc_local_forces(nodes, struts, d)
 
 	writeDisplacements(options.displacementVectorFile, d, nodes)
 
-	drawSystem(nodes, struts, constraints, d, options.scale, options.savePlot)
+	drawSystem(nodes, struts, constraints, strutLoads, d, options.scale, options.savePlot)
 		
 #		parser = OptionParser(usage="usage: %prog [options] filename",
 #													version="%prog 1.0")

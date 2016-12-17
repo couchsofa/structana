@@ -10,3 +10,8 @@ def getConsttraint(name, constraints):
 	for ID, const in constraints.iteritems():
 		if const['Node'] == name:
 			return const
+
+def getStrutLoad(name, strutLoads):
+	for ID, strutLoad in strutLoads.iteritems():
+		if strutLoad['Strut'] == name:
+			return strutLoad
