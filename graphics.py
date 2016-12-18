@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import matplotlib.patches as patches
+from matplotlib.patches import Wedge
 import numpy as np
 from util import *
 
@@ -331,11 +332,8 @@ def drawSystem(nodes, struts, constraints, strutLoads, d, size, savePlot):
 		node = nodeNameToID(strut['EndNode'], nodes)
 		_x2 = nodes[node]['X']
 		_z2 = nodes[node]['Z']
-		
-		v = np.array([_x2-_x1,_z2-_z1])
-		v = normalize(v)
-		h = rotate(v, np.pi*0.5)
 
+		# trapazoid
 		if Type == 1:
 			p1 = (_x1, _z1)
 			
@@ -366,6 +364,44 @@ def drawSystem(nodes, struts, constraints, strutLoads, d, size, savePlot):
 
 			plt.plot(px, pz, '-', color="blue", lw=width)
 
+		# torque
+		if Type == 2:
+			p1 = (_x1, _z1)
+			v = np.array([x1, 0])
+			v = rotate(v, np.deg2rad(strut['alpha']*-1))
+			p1 = (p1[0] + v[0], p1[1] + v[1])
+			
+			circle = plt.Circle(p1, float(size)/10, color="blue", clip_on=False)
+			ax.add_artist(circle)
+
+			p1 = (_x1, _z1)
+			v = np.array([x1, 1])
+			v = rotate(v, np.deg2rad(strut['alpha']*-1))
+			p1 = (p1[0] + v[0], p1[1] + v[1])
+			
+			ax.annotate(str(M*1/loadScale), xy=p1, xycoords='data', xytext=(-40, -30),
+				textcoords='offset points',
+				bbox=dict(boxstyle='round,pad=0.2', ec='white', fc='white'),
+				arrowprops=dict(arrowstyle="->", ec="blue",
+				connectionstyle="angle3,angleA=90,angleB=0"))
+
+		# Force
+		if Type == 3:
+			p1 = (_x1, _z1)
+			
+			v = np.array([x1, 0])
+			v = rotate(v, np.deg2rad(strut['alpha']*-1))
+			p12 = (p1[0] + v[0], p1[1] + v[1])
+			
+			vF = np.array([0, F])
+			vF = rotate(vF, np.deg2rad(strut['alpha']*-1))
+			p2 = (p12[0] + vF[0], p12[1] + vF[1])
+
+			vF = np.array([0, F-(size/4.0)])
+			vF = rotate(vF, np.deg2rad(strut['alpha']*-1))
+
+			ax.arrow(p2[0],p2[1], (vF[0]*-1), (vF[1]*-1), head_width=size/4.0, head_length=size/4.0, fc='blue', ec='blue')
+			
 
 	##############################################################################
 
