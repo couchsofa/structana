@@ -356,13 +356,22 @@ def drawSystem(nodes, struts, constraints, strutLoads, d, size, savePlot):
 			px = [p1[0], p2[0], p3[0], p4[0]]
 			pz = [p1[1], p2[1], p3[1], p4[1]]
 
-			vq = np.array([0, q-(size/4.0)])
+			if q >= 0:
+				vq = np.array([0, q-(size/4.0)])
+				textPoint = [p12[0] - size, p12[1] + size]
+			if q < 0:
+				vq = np.array([0, q+(size/4.0)])
+				textPoint = [p12[0] - size, p12[1] - size]
+
 			vq = rotate(vq, np.deg2rad(strut['alpha']*-1))
 
 			ax.arrow(p2[0],p2[1], (vq[0]*-1), (vq[1]*-1), head_width=size/4.0, head_length=size/4.0, fc='blue', ec='blue')
 			ax.arrow(p3[0],p3[1], (vq[0]*-1), (vq[1]*-1), head_width=size/4.0, head_length=size/4.0, fc='blue', ec='blue')
 
 			plt.plot(px, pz, '-', color="blue", lw=width)
+			ax.text(textPoint[0], textPoint[1], str(q*1/loadScale), bbox=dict(boxstyle='round,pad=0.2',
+																											ec='white',
+																											fc='white'))
 
 		# torque
 		if Type == 2:
@@ -379,7 +388,13 @@ def drawSystem(nodes, struts, constraints, strutLoads, d, size, savePlot):
 			v = rotate(v, np.deg2rad(strut['alpha']*-1))
 			p1 = (p1[0] + v[0], p1[1] + v[1])
 			
-			ax.annotate(str(M*1/loadScale), xy=p1, xycoords='data', xytext=(-40, -30),
+			if M <= 0:
+				textPoint = [5, -30]
+			if M > 0:
+				textPoint = [-40, -30]
+
+			ax.annotate(str(M*1/loadScale), xy=p1, xycoords='data',
+				xytext=(textPoint[0], textPoint[1]),
 				textcoords='offset points',
 				bbox=dict(boxstyle='round,pad=0.2', ec='white', fc='white'),
 				arrowprops=dict(arrowstyle="->", ec="blue",
@@ -397,11 +412,19 @@ def drawSystem(nodes, struts, constraints, strutLoads, d, size, savePlot):
 			vF = rotate(vF, np.deg2rad(strut['alpha']*-1))
 			p2 = (p12[0] + vF[0], p12[1] + vF[1])
 
-			vF = np.array([0, F-(size/4.0)])
+			if F <= 0:
+				vF = np.array([0, F+(size/4.0)])
+				textPoint = [p12[0] - size, p12[1] - size]
+			if F > 0:
+				vF = np.array([0, F-(size/4.0)])
+				textPoint = [p12[0] - size, p12[1] + size]
+			
 			vF = rotate(vF, np.deg2rad(strut['alpha']*-1))
 
 			ax.arrow(p2[0],p2[1], (vF[0]*-1), (vF[1]*-1), head_width=size/4.0, head_length=size/4.0, fc='blue', ec='blue')
-			
+			ax.text(textPoint[0], textPoint[1], str(F*1/loadScale), bbox=dict(boxstyle='round,pad=0.2',
+																											ec='white',
+																											fc='white'))
 
 	##############################################################################
 
