@@ -132,7 +132,7 @@ def main():
 
 	writeDisplacements(options.displacementVectorFile, d, nodes)
 
-	drawSystem(nodes, struts, constraints, strutLoads, d, options.scale, options.savePlot)
+	drawSystem(nodes, struts, constraints, strutLoads, nodeLoads, d, options.scale, options.savePlot)
 		
 #		parser = OptionParser(usage="usage: %prog [options] filename",
 #													version="%prog 1.0")

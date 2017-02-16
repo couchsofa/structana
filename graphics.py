@@ -279,6 +279,30 @@ def drawDisplacedStruts(struts, nodes, size, ax):
 
 		bezier(verts, size, ax)
 
+def drawTorque(M, _x1, _z1, x1, strut, size, ax):
+	p1 = (_x1, _z1)
+	v = np.array([x1, 0])
+	v = rotate(v, np.deg2rad(strut['alpha']*-1))
+	p1 = (p1[0] + v[0], p1[1] + v[1])
+	
+	circle = plt.Circle(p1, float(size)/10, color="blue", clip_on=False)
+	ax.add_artist(circle)
+
+	p1 = (_x1, _z1)
+	v = np.array([x1, 1])
+	v = rotate(v, np.deg2rad(strut['alpha'] * -1))
+	p1 = (p1[0] + v[0], p1[1] + v[1])
+	
+	if M <= 0:
+		textPoint = [5, -30]
+	if M > 0:
+		textPoint = [-40, -30]
+
+	ax.annotate(str(M*1/loadScale), xy=p1, xycoords='data', xytext=(textPoint[0], textPoint[1]),
+		textcoords='offset points',
+		bbox=dict(boxstyle='round,pad=0.2', ec='white', fc='white'),
+		arrowprops=dict(arrowstyle="->", ec="blue", connectionstyle="angle3,angleA=90,angleB=0"))
+
 def getPlotLimit(ax):
 	lim_x = ax.get_xlim()
 	lim_y = ax.get_ylim()
@@ -288,7 +312,7 @@ def getPlotLimit(ax):
 	else:
 		return lim_y
 
-def drawSystem(nodes, struts, constraints, strutLoads, d, size, savePlot):
+def drawSystem(nodes, struts, constraints, strutLoads, nodeLoads, d, size, savePlot):
 	_min, _max, mid = getBounds(nodes)
 	fig, ax = plt.subplots() 
 
@@ -315,9 +339,9 @@ def drawSystem(nodes, struts, constraints, strutLoads, d, size, savePlot):
 	##############################################################################
 
 	# loads
-	for ID, strut in struts.iteritems():
+	for ID, load in strutLoads.iteritems():
 		width = size
-		load = getStrutLoad(strut['ID'], strutLoads)
+		strut = getStrutByName(load['Strut'], struts)
 		x1   = load['x1']
 		x2   = load['x2']
 		F    = load['F'] * loadScale
@@ -375,30 +399,7 @@ def drawSystem(nodes, struts, constraints, strutLoads, d, size, savePlot):
 
 		# torque
 		if Type == 2:
-			p1 = (_x1, _z1)
-			v = np.array([x1, 0])
-			v = rotate(v, np.deg2rad(strut['alpha']*-1))
-			p1 = (p1[0] + v[0], p1[1] + v[1])
-			
-			circle = plt.Circle(p1, float(size)/10, color="blue", clip_on=False)
-			ax.add_artist(circle)
-
-			p1 = (_x1, _z1)
-			v = np.array([x1, 1])
-			v = rotate(v, np.deg2rad(strut['alpha']*-1))
-			p1 = (p1[0] + v[0], p1[1] + v[1])
-			
-			if M <= 0:
-				textPoint = [5, -30]
-			if M > 0:
-				textPoint = [-40, -30]
-
-			ax.annotate(str(M*1/loadScale), xy=p1, xycoords='data',
-				xytext=(textPoint[0], textPoint[1]),
-				textcoords='offset points',
-				bbox=dict(boxstyle='round,pad=0.2', ec='white', fc='white'),
-				arrowprops=dict(arrowstyle="->", ec="blue",
-				connectionstyle="angle3,angleA=90,angleB=0"))
+			drawTorque(M, _x1, _z1, x1, strut, size, ax)
 
 		# Force
 		if Type == 3:
@@ -425,6 +426,36 @@ def drawSystem(nodes, struts, constraints, strutLoads, d, size, savePlot):
 			ax.text(textPoint[0], textPoint[1], str(F*1/loadScale), bbox=dict(boxstyle='round,pad=0.2',
 																											ec='white',
 																											fc='white'))
+
+	for ID, nodeLoad in nodeLoads.iteritems():
+		Fx = nodeLoad['Fx'] * loadScale
+		Fz = nodeLoad['Fz'] * loadScale
+		M  = nodeLoad['M']  * loadScale
+
+		print Fx
+
+		node = nodeNameToID(nodeLoad['Node'], nodes)
+		_x1 = nodes[node]['X']
+		_z1 = nodes[node]['Z']
+
+		if Fx != 0:
+			x1 = _x1 - Fx
+			z1 = _z1
+			vx = Fx - size/4.0
+			vz = 1.0e-16 # Fix for div by zero in matplotlib
+
+			ax.arrow(x1, _z1, vx, vz, head_width=size/4.0, head_length=size/4.0, fc='blue', ec='blue')
+
+		if Fz != 0:
+			x1 = _x1
+			z1 = _z1 - Fz
+			vx = 1.0e-16 # Fix for div by zero in matplotlib
+			vz = Fz - size/4.0
+		
+			ax.arrow(x1, _z1, vx, vz, head_width=size/4.0, head_length=size/4.0, fc='blue', ec='blue')
+		
+		if M != 0:
+			drawTorque(M, _x1, _z1, 0, strut, size, ax)
 
 	##############################################################################
 
