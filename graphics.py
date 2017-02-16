@@ -279,10 +279,11 @@ def drawDisplacedStruts(struts, nodes, size, ax):
 
 		bezier(verts, size, ax)
 
-def drawTorque(M, _x1, _z1, x1, strut, size, ax):
+def drawTorque(M, _x1, _z1, x1, alpha, size, ax):
 	p1 = (_x1, _z1)
 	v = np.array([x1, 0])
-	v = rotate(v, np.deg2rad(strut['alpha']*-1))
+
+	v = rotate(v, np.deg2rad(alpha * -1))
 	p1 = (p1[0] + v[0], p1[1] + v[1])
 	
 	circle = plt.Circle(p1, float(size)/10, color="blue", clip_on=False)
@@ -290,7 +291,7 @@ def drawTorque(M, _x1, _z1, x1, strut, size, ax):
 
 	p1 = (_x1, _z1)
 	v = np.array([x1, 1])
-	v = rotate(v, np.deg2rad(strut['alpha'] * -1))
+	v = rotate(v, np.deg2rad(alpha * -1))
 	p1 = (p1[0] + v[0], p1[1] + v[1])
 	
 	if M <= 0:
@@ -303,42 +304,36 @@ def drawTorque(M, _x1, _z1, x1, strut, size, ax):
 		bbox=dict(boxstyle='round,pad=0.2', ec='white', fc='white'),
 		arrowprops=dict(arrowstyle="->", ec="blue", connectionstyle="angle3,angleA=90,angleB=0"))
 
-def getPlotLimit(ax):
-	lim_x = ax.get_xlim()
-	lim_y = ax.get_ylim()
+def drawNodeLoads(nodeLoads, size, struts, nodes, ax):
+	for ID, nodeLoad in nodeLoads.iteritems():
+		Fx = nodeLoad['Fx'] * loadScale
+		Fz = nodeLoad['Fz'] * loadScale
+		M  = nodeLoad['M']  * loadScale
 
-	if abs(lim_x[1]) > abs(lim_y[1]):
-		return lim_x
-	else:
-		return lim_y
+		node = nodeNameToID(nodeLoad['Node'], nodes)
+		_x1 = nodes[node]['X']
+		_z1 = nodes[node]['Z']
 
-def drawSystem(nodes, struts, constraints, strutLoads, nodeLoads, d, size, savePlot):
-	_min, _max, mid = getBounds(nodes)
-	fig, ax = plt.subplots() 
+		if Fx != 0:
+			x1 = _x1 - Fx
+			z1 = _z1
+			vx = Fx - size/4.0
+			vz = 1.0e-16 # Fix for div by zero in matplotlib
 
-	#plt.xlabel('x label')
-	#plt.ylabel('y label')
+			ax.arrow(x1, _z1, vx, vz, head_width=size/4.0, head_length=size/4.0, fc='blue', ec='blue')
 
-	# Nodes
-	drawNodes(nodes, size, ax)
+		if Fz != 0:
+			x1 = _x1
+			z1 = _z1 - Fz
+			vx = 1.0e-16 # Fix for div by zero in matplotlib
+			vz = Fz - size/4.0
+		
+			ax.arrow(x1, _z1, vx, vz, head_width=size/4.0, head_length=size/4.0, fc='blue', ec='blue')
 
-	# Constraints
-	drawConstraints(constraints, nodes, mid, size, ax)
+		if M != 0:
+			drawTorque(M, _x1, _z1, 0, 0, size, ax)
 
-	# Struts
-	drawStruts(struts, nodes, size, ax)
-	
-	##############################################################################
-
-	# Displaced nodes
-	drawDisplacedNodes(d, nodes, size, ax)
-
-	# Displaced struts
-	drawDisplacedStruts(struts, nodes, size, ax)
-
-	##############################################################################
-
-	# loads
+def drawStrutLoads(strutLoads, size, struts, nodes, ax):
 	for ID, load in strutLoads.iteritems():
 		width = size
 		strut = getStrutByName(load['Strut'], struts)
@@ -399,7 +394,7 @@ def drawSystem(nodes, struts, constraints, strutLoads, nodeLoads, d, size, saveP
 
 		# torque
 		if Type == 2:
-			drawTorque(M, _x1, _z1, x1, strut, size, ax)
+			drawTorque(M, _x1, _z1, x1, strut['alpha'], size, ax)
 
 		# Force
 		if Type == 3:
@@ -427,35 +422,44 @@ def drawSystem(nodes, struts, constraints, strutLoads, nodeLoads, d, size, saveP
 																											ec='white',
 																											fc='white'))
 
-	for ID, nodeLoad in nodeLoads.iteritems():
-		Fx = nodeLoad['Fx'] * loadScale
-		Fz = nodeLoad['Fz'] * loadScale
-		M  = nodeLoad['M']  * loadScale
+def getPlotLimit(ax):
+	lim_x = ax.get_xlim()
+	lim_y = ax.get_ylim()
 
-		print Fx
+	if abs(lim_x[1]) > abs(lim_y[1]):
+		return lim_x
+	else:
+		return lim_y
 
-		node = nodeNameToID(nodeLoad['Node'], nodes)
-		_x1 = nodes[node]['X']
-		_z1 = nodes[node]['Z']
+def drawSystem(nodes, struts, constraints, strutLoads, nodeLoads, d, size, savePlot):
+	_min, _max, mid = getBounds(nodes)
+	fig, ax = plt.subplots() 
 
-		if Fx != 0:
-			x1 = _x1 - Fx
-			z1 = _z1
-			vx = Fx - size/4.0
-			vz = 1.0e-16 # Fix for div by zero in matplotlib
+	#plt.xlabel('x label')
+	#plt.ylabel('y label')
 
-			ax.arrow(x1, _z1, vx, vz, head_width=size/4.0, head_length=size/4.0, fc='blue', ec='blue')
+	# Nodes
+	drawNodes(nodes, size, ax)
 
-		if Fz != 0:
-			x1 = _x1
-			z1 = _z1 - Fz
-			vx = 1.0e-16 # Fix for div by zero in matplotlib
-			vz = Fz - size/4.0
-		
-			ax.arrow(x1, _z1, vx, vz, head_width=size/4.0, head_length=size/4.0, fc='blue', ec='blue')
-		
-		if M != 0:
-			drawTorque(M, _x1, _z1, 0, strut, size, ax)
+	# Constraints
+	drawConstraints(constraints, nodes, mid, size, ax)
+
+	# Struts
+	drawStruts(struts, nodes, size, ax)
+	
+	##############################################################################
+
+	# Displaced nodes
+	drawDisplacedNodes(d, nodes, size, ax)
+
+	# Displaced struts
+	drawDisplacedStruts(struts, nodes, size, ax)
+
+	##############################################################################
+
+	# loads
+	drawStrutLoads(strutLoads, size, struts, nodes, ax)
+	drawNodeLoads(nodeLoads, size, struts, nodes, ax)
 
 	##############################################################################
 
