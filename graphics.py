@@ -476,6 +476,10 @@ def drawSystem(nodes, struts, constraints, strutLoads, nodeLoads, d, size, saveP
 	ax.set_aspect('equal')
 
 	if savePlot != False:
+
+		# saves plot in file
 		plt.savefig(savePlot, bbox_inches='tight')
 	else:
+
+		# shows the plot
 		plt.show()
