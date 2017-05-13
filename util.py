@@ -16,3 +16,19 @@ def getStrutByName(name, struts):
 		if strut['ID'] == name:
 			return strut
 
+def printDebugMatrix(Name, M, debug):
+	if debug:
+		print Name + ": "
+		print "################################################################################"
+		print M
+		print "################################################################################"
+		print ""
+
+def printDebugStrutAttr(Name, Attr, struts, debug):
+	if debug:
+		for ID, strut in struts.iteritems():
+			print "Strut " + strut["ID"] + " [" + Name + "]: "
+			print "################################################################################"
+			print strut[Attr]
+			print "################################################################################"
+			print ""
