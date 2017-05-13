@@ -1,4 +1,4 @@
-from optparse import OptionParser
+from optparse import OptionParser, OptionGroup
 from input import *
 from output import *
 from matrices import *
@@ -18,66 +18,99 @@ def main():
 #		Input files 																															 #
 ################################################################################
 
-	parser.add_option("-N", "--NodeFile",
+	group = OptionGroup(parser, "Input files")
+
+	group.add_option("-N", "--NodeFile",
+										type="string",
 										action="store",
 										dest="nodeFile",
 										default='Input_nodes.csv',
 										help="CSV file with node definitions")
 
-	parser.add_option("-S", "--StrutFile",
+	group.add_option("-S", "--StrutFile",
+										type="string",
 										action="store",
 										dest="strutFile",
 										default='Input_struts.csv',
 										help="CSV file with strut definitions")
 
-	parser.add_option("-C", "--ConstraintFile",
+	group.add_option("-C", "--ConstraintFile",
+										type="string",
 										action="store",
 										dest="constFile",
 										default='Input_constraints.csv',
 										help="CSV file with constraint definitions")
 
-	parser.add_option("-L", "--StrutLoadFile",
+	group.add_option("-L", "--StrutLoadFile",
+										type="string",
 										action="store",
 										dest="strutLoadFile",
 										default='Input_strutLoads.csv',
 										help="CSV file with strut load definitions")
 
-	parser.add_option("-F", "--NodeLoadFile",
+	group.add_option("-F", "--NodeLoadFile",
+										type="string",
 										action="store",
 										dest="nodeLoadFile",
 										default='Input_nodeLoads.csv',
 										help="CSV file with node load definitions")
 
-	parser.add_option("-T",
+	group.add_option("-T",
 										action="store_true",
 										dest="genTemplates",
 										help="Generate csv input template files")
+
+	parser.add_option_group(group)
 
 ################################################################################
 #		Output files 																															 #
 ################################################################################
 
-	parser.add_option("-D", "--DisplacementVectorFile",
+	group = OptionGroup(parser, "Output files")
+
+	group.add_option("-D", "--DisplacementVectorFile",
+										type="string",
 										action="store",
 										dest="displacementVectorFile",
 										default='displacement.csv',
 										help="Destination path to save the displacement vector csv file")
 
+	parser.add_option_group(group)
+
 ################################################################################
 #		graphics																																	 #
 ################################################################################
 
-	parser.add_option("-s", "--Scale",
+	group = OptionGroup(parser, "Graphics options")
+
+	group.add_option("-s", "--Scale",
+										type="float",
 										action="store",
 										dest="scale",
 										default=2.0,
 										help="Scales plot elements")
 
-	parser.add_option("-P", "--SavePlot",
+	group.add_option("-P", "--SavePlot",
+										type="string",
 										action="store",
 										dest="savePlot",
 										default=False,
 										help="Destination path to save the system plot. Supported filetypes: .png, .pdf")
+
+	parser.add_option_group(group)
+
+################################################################################
+#		debug																																	 #
+################################################################################
+
+	group = OptionGroup(parser, "Debug options")
+
+	group.add_option("-d", "--Debug",
+										action="store_true",
+										dest="debug",
+										help="Print debug outputs")
+
+	parser.add_option_group(group)
 
 ################################################################################
 
@@ -110,10 +143,14 @@ def main():
 
 	S_G = assemble_S_G(nodeLoads, struts, nodes)
 
-	print S_G
+	# debug
+	printDebugMatrix("S_G", S_G, options.debug)
 
 	K = assemble_global_K_I(nodes, struts)
 	apply_constraints(K, struts, nodes, constraints)
+
+	# debug
+	printDebugMatrix("K", K, options.debug)
 
 	if sp.det(K) == 0:
 		print('System is kinematic (det(K)=0)!')
@@ -124,37 +161,16 @@ def main():
 		exit()
 
 	d = solver(K, S_G, constraints, nodes)
-
-	print d
-	print K
-
 	calc_local_forces(nodes, struts, d)
 
+	# debug
+	printDebugMatrix("d", d, options.debug)
+	printDebugStrutAttr("K", "K", struts, options.debug)
+	printDebugStrutAttr("S_l", "Sl", struts, options.debug)
+
 	writeDisplacements(options.displacementVectorFile, d, nodes)
-
-	drawSystem(nodes, struts, constraints, strutLoads, nodeLoads, d, options.scale, options.savePlot)
-		
-#		parser = OptionParser(usage="usage: %prog [options] filename",
-#													version="%prog 1.0")
-#		parser.add_option("-x", "--xhtml",
-#											action="store_true",
-#											dest="xhtml_flag",
-#											default=False,
-#											help="create a XHTML template instead of HTML")
-#		parser.add_option("-c", "--cssfile",
-#											action="store", # optional because action defaults to "store"
-#											dest="cssfile",
-#											default="style.css",
-#											help="CSS file to link",)
-#		(options, args) = parser.parse_args()
-#
-#		if len(args) != 1:
-#				parser.error("wrong number of arguments")
-#
-#		print options
-#		print args
-
-
+	drawSystem(nodes, struts, constraints, strutLoads, nodeLoads, d, float(options.scale), options.savePlot)
 
 if __name__ == '__main__':
 	main()
+
