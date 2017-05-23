@@ -1,3 +1,5 @@
+import numpy as np
+
 def nodeIDtoName(id, nodes):
 	return nodes[id]["ID"]
 
@@ -20,7 +22,7 @@ def printDebugMatrix(Name, M, debug):
 	if debug:
 		print Name + ": "
 		print "################################################################################"
-		print M
+		printNPArray(M)
 		print "################################################################################"
 		print ""
 
@@ -29,6 +31,10 @@ def printDebugStrutAttr(Name, Attr, struts, debug):
 		for ID, strut in struts.iteritems():
 			print "Strut " + strut["ID"] + " [" + Name + "]: "
 			print "################################################################################"
-			print strut[Attr]
+			printNPArray(strut[Attr])
 			print "################################################################################"
 			print ""
+
+def printNPArray(Arr):
+	np.set_printoptions(precision=3, suppress=True, linewidth=169)
+	print Arr
