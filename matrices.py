@@ -9,37 +9,38 @@ def _A( e, N ):
 	if e <= 0:
 		return 4
 	# positive normal pressure
-	if N > 0:
-		return (e * (math.sin(e) - e * math.cos(e)))\
+	if N < 0:
+		return (e * math.sin(e) - e**2 * math.cos(e))\
 						/(2 * (1 - math.cos(e)) - (e * math.sin(e)))
 	# negative normal pressure
 	else:
-		return (e * (math.sinh(e) - e * math.cosh(e)) )\
-						/(2 * ((math.cosh(e) - 1) -e * math.sinh(e)))
+		return ( e * math.sinh( e ) - e**2 * math.cosh( e ) )\
+						/(2 * ( 1- math.cosh(e)) + e * math.sinh(e))
 
 def _B( e, N ):
 	if e <= 0:
 		return 2
 	# positive normal pressure
-	if N > 0:
-		return (e * (e - math.sin(e) ))\
+	if N < 0:
+		return (e**2 - e * math.sin(e) )\
 						/( 2*(1 - math.cos(e)) - e * math.sin(e) )
 	# negative normal pressure
 	else:
-		return (e * (e - math.sinh(e)))\
-						/(2*(math.cosh(e) - 1) - e * math.sinh(e))
+		return (e**2 - e * math.sinh(e))\
+						/(2*(1 - math.cosh(e)) + e * math.sinh(e))
 
 def _C( e, N ):
 	if e <= 0:
 		return 3
 	# positive normal pressure
-	if N > 0:
+	if N < 0:
 		return (e**2 * math.sin(e))\
 						/(math.sin(e) - e * math.cos(e))
 	# negative normal pressure
 	else:
 		return (e**2 * math.sinh(e))\
-						/(e * math.cosh(e) - math.sinh(e))
+						/( math.sinh(e) - e * math.cosh(e))
+
 
 def _D( e, N ):
 	return _A(e, N) + _B(e, N)
@@ -94,7 +95,8 @@ def assemble_global_K_I(nodes, struts):
 
 		insertion_point = nodeNameToID(strut['StartNode'], nodes) * 3
 		global_K = insert( global_K, K, insertion_point, insertion_point, lambda x,y: x+y )
-		global_K = symmetrize(global_K)
+	
+	global_K = symmetrize(global_K)
 
 	return global_K
 
@@ -195,6 +197,43 @@ def K_3_I( E, A, l ):
 							  [0		, 0	, 0	, 0					, 0	, 0]])
 
 	return K
+
+def Kgeom_(N, l):
+	if N <= 0:
+
+		K = np.array([[0, 0			 , 0, 0, 0,			  0],
+					  [0, -1*abs(N)/l, 0, 0, abs(N)/l,	  0],
+					  [0, 0			 , 0, 0, 0, 		  0],
+					  [0, 0			 , 0, 0, 0,			  0],
+					  [0, 0			 , 0, 0, -1*abs(N)/l, 0],
+					  [0, 0			 , 0, 0, 0,			  0]])
+	else:
+		K = np.array([[0, 0			 , 0, 0, 0,			  0],
+					  [0, abs(N)/l   , 0, 0, -1*abs(N)/l, 0],
+					  [0, 0			 , 0, 0, 0, 		  0],
+					  [0, 0			 , 0, 0, 0,			  0],
+					  [0, 0			 , 0, 0, abs(N)/l,    0],
+					  [0, 0			 , 0, 0, 0,			  0]])
+
+	return K
+
+def calculateKgeom(struts, nodes):
+	size = len(nodes) * 3
+	K = np.zeros( (size, size) )
+
+	for ID, strut in struts.iteritems():
+		N = strut["N"]
+		l = strut["l"]
+		
+		Kgeom = Kgeom_(N,l)
+
+		insertion_point = nodeNameToID(strut['StartNode'], nodes) * 3
+		K = insert( K, Kgeom, insertion_point, insertion_point, lambda x,y: x+y )
+	
+	K = symmetrize(K)
+
+	return K
+
 
 def symmetrize(M):
 	return M + M.T - np.diag(M.diagonal())
