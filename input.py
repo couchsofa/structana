@@ -28,7 +28,7 @@ def readCSV(csvFile, typeTemplate):
 
 			for key, value in row.iteritems():
 				if value is None:
-					print('Too fee entries in row ' + str(ID + 1) + ': ' + csvFile)
+					print('Too few entries in row ' + str(ID + 1) + ': ' + csvFile)
 					exit()
 
 			row = typeConv(row, typeTemplate)
