@@ -113,6 +113,26 @@ def main():
 	parser.add_option_group(group)
 
 ################################################################################
+#		solver																																	 #
+################################################################################
+
+	group = OptionGroup(parser, "Solver options")
+
+	group.add_option("-e", "--Epsilon",
+										type="float",
+										action="store",
+										dest="epsilon",
+										default=10.0,
+										help="Threshhold at which to stop iteration")
+
+	group.add_option("-2", "--SecondOrder",
+										action="store_true",
+										dest="secondOrder",
+										help="Perform iterative second order analysis")
+
+	parser.add_option_group(group)
+
+################################################################################
 
 	(options, args) = parser.parse_args()
 
@@ -160,7 +180,7 @@ def main():
 		print('System is kinematic (n < 3)!')
 		exit()
 
-	d = solver(K, S_G, constraints, nodes)
+	d = solver(K, S_G, constraints, nodes, struts, options.epsilon, options.secondOrder)
 	calc_local_forces(nodes, struts, d)
 
 	# debug
