@@ -4,27 +4,6 @@ from util import *
 
 #calculates the load vector from a load
 def get_S_L( load, strut):
-	dict = {
-		1:{
-			'1'  : S_L_1_1,
-			'2a' : S_L_1_2a,
-			'2b' : S_L_1_2b,
-			'3'  : S_L_1_3
-		},
-		2:{
-			'1'  : S_L_2_1,
-			'2a' : S_L_2_2a,
-			'2b' : S_L_2_2b,
-			'3'  : S_L_2_3
-		},
-		3:{
-			'1'  : S_L_3_1,
-			'2a' : S_L_3_2a,
-			'2b' : S_L_3_2b,
-			'3'  : S_L_3_3
-		}
-	}
-
 	x1 = load['x1']
 	x2 = load['x2']
 	l  = strut['l']
@@ -256,3 +235,25 @@ def S_L_3_3( x1, x2, l, F, M, q ):
 	S = np.array([0, A, 0, 0, B, 0])
 
 	return S
+
+
+dict = {
+	1:{
+		'1'  : S_L_1_1,
+		'2a' : S_L_1_2a,
+		'2b' : S_L_1_2b,
+		'3'  : S_L_1_3
+	},
+	2:{
+		'1'  : S_L_2_1,
+		'2a' : S_L_2_2a,
+		'2b' : S_L_2_2b,
+		'3'  : S_L_2_3
+	},
+	3:{
+		'1'  : S_L_3_1,
+		'2a' : S_L_3_2a,
+		'2b' : S_L_3_2b,
+		'3'  : S_L_3_3
+	}
+}
