@@ -3,16 +3,23 @@ import numpy as np
 from util import *
 
 def _e( E, I, l, N ):
-	return l*math.sqrt(float(abs(N))/float(E*I))
+	e = l*math.sqrt(float(abs(N))/float(E*I))
+	if e >= np.pi * 2:
+		print('System is unstable (e = ' + str(e) + ' >= 2*pi)!')
+		exit()
+	return e
 
 def _A( e, N ):
 	if e <= 0:
 		return 4
-	# positive normal pressure
+	# negative normal pressure
 	if N < 0:
+		if e >= 1.431 * np.pi:
+			print 'System is unstable (Euler III e >= 1,431*pi)!'
+			exit()
 		return (e * math.sin(e) - e**2 * math.cos(e))\
 						/(2 * (1 - math.cos(e)) - (e * math.sin(e)))
-	# negative normal pressure
+	# positive normal pressure
 	else:
 		return ( e * math.sinh( e ) - e**2 * math.cosh( e ) )\
 						/(2 * ( 1- math.cosh(e)) + e * math.sinh(e))
@@ -20,11 +27,11 @@ def _A( e, N ):
 def _B( e, N ):
 	if e <= 0:
 		return 2
-	# positive normal pressure
+	# negative normal pressure
 	if N < 0:
 		return (e**2 - e * math.sin(e) )\
 						/( 2*(1 - math.cos(e)) - e * math.sin(e) )
-	# negative normal pressure
+	# positive normal pressure
 	else:
 		return (e**2 - e * math.sinh(e))\
 						/(2*(1 - math.cosh(e)) + e * math.sinh(e))
@@ -32,17 +39,22 @@ def _B( e, N ):
 def _C( e, N ):
 	if e <= 0:
 		return 3
-	# positive normal pressure
+	# negative normal pressure
 	if N < 0:
+		if e >= np.pi:
+			print 'System is unstable (Euler II e >= pi)!'
+			exit()
 		return (e**2 * math.sin(e))\
 						/(math.sin(e) - e * math.cos(e))
-	# negative normal pressure
+	# positive normal pressure
 	else:
 		return (e**2 * math.sinh(e))\
 						/( math.sinh(e) - e * math.cosh(e))
 
 
 def _D( e, N ):
+	if N < 0 and e > np.pi:
+		return 0
 	return _A(e, N) + _B(e, N)
 
 #rotation matrix for angle alpha
@@ -59,6 +71,54 @@ def rot(alpha):
 
 	return r
 
+
+# apply the constraints to K saved in struts
+def applyConstToStrutK(struts, constraints):
+	for ID, strut in struts.iteritems():
+		zero = np.zeros(6)
+
+		node = strut['StartNode']
+		id = 0
+		const = getConsttraint(node, constraints)
+
+		if const:
+			if const['x']:
+				x = id * 3
+				strut["K"][:,x] = zero
+				strut["K"][x,:] = zero
+			if const['z']:
+				x = id * 3 + 1
+				strut["K"][:,x] = zero
+				strut["K"][x,:] = zero
+			if const['r']:
+				x = id * 3 + 2
+				strut["K"][:,x] = zero
+				strut["K"][x,:] = zero
+
+		node = strut['EndNode']
+		id = 1
+		const = getConsttraint(node, constraints)
+
+		if const:
+			if const['x']:
+				x = id * 3
+				strut["K"][:,x] = zero
+				strut["K"][x,:] = zero
+			if const['z']:
+				x = id * 3 + 1
+				strut["K"][:,x] = zero
+				strut["K"][x,:] = zero
+			if const['r']:
+				x = id * 3 + 2
+				strut["K"][:,x] = zero
+				strut["K"][x,:] = zero
+
+		#check for zeros in column and row
+		for i in range(6):
+			if np.all(strut["K"][:,i] == 0) and np.all(strut["K"][i,:] == 0):
+				strut["K"][i][i] = 1
+
+
 #create strut matrix
 def create_strut_K(strut):
 	alpha = strut['alpha']
@@ -67,7 +127,7 @@ def create_strut_K(strut):
 	A = strut['A']
 	I = strut['I']
 	Type = strut['Type']
-	N = 0 #...N is ignored at first order analysis
+	N = strut['N']
 
 	if Type == '3':
 		K = K_3_I(E, A, l)
@@ -95,8 +155,6 @@ def assemble_global_K_I(nodes, struts):
 
 		insertion_point = nodeNameToID(strut['StartNode'], nodes) * 3
 		global_K = insert( global_K, K, insertion_point, insertion_point, lambda x,y: x+y )
-	
-	global_K = symmetrize(global_K)
 
 	return global_K
 
@@ -200,7 +258,6 @@ def K_3_I( E, A, l ):
 
 def Kgeom_(N, l):
 	if N <= 0:
-
 		K = np.array([[0, 0			 , 0, 0, 0,			  0],
 					  [0, -1*abs(N)/l, 0, 0, abs(N)/l,	  0],
 					  [0, 0			 , 0, 0, 0, 		  0],
@@ -229,8 +286,6 @@ def calculateKgeom(struts, nodes):
 
 		insertion_point = nodeNameToID(strut['StartNode'], nodes) * 3
 		K = insert( K, Kgeom, insertion_point, insertion_point, lambda x,y: x+y )
-	
-	K = symmetrize(K)
 
 	return K
 

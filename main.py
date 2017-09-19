@@ -166,21 +166,11 @@ def main():
 	# debug
 	printDebugMatrix("S_G", S_G, options.debug)
 
-	K = assemble_global_K_I(nodes, struts)
-	apply_constraints(K, struts, nodes, constraints)
-
-	# debug
-	printDebugMatrix("K", K, options.debug)
-
-	if sp.det(K) == 0:
-		print('System is kinematic (det(K)=0)!')
-		exit()
-
 	if countConst(constraints) < 3:
 		print('System is kinematic (n < 3)!')
 		exit()
 
-	d = solver(K, S_G, constraints, nodes, struts, options.epsilon, options.secondOrder)
+	d = solver(S_G, constraints, nodes, struts, options.epsilon, options.secondOrder, options.debug)
 	calc_local_forces(nodes, struts, d)
 
 	# debug

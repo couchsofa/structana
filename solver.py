@@ -1,6 +1,6 @@
 import scipy.linalg as sp
 from util import *
-from matrices import calc_local_forces, calculateKgeom
+from matrices import *
 
 def calculateN(nodes, struts, d):
 	calc_local_forces(nodes, struts, d)
@@ -10,7 +10,12 @@ def calculateN(nodes, struts, d):
 
 
 def solveLinear(K, S_G, constraints, nodes):
-	d = sp.solve(K,S_G)
+	
+	if sp.det(K) == 0:
+		print('System is kinematic (det(K)=0)!')
+		exit()
+		
+	d = sp.solve(K, S_G)
 
 	#apply constraints: set d[i] = 0
 	for ID, const in constraints.iteritems():
@@ -28,26 +33,55 @@ def solveLinear(K, S_G, constraints, nodes):
 	return d
 
 
-def solver(K, S_G, constraints, nodes, struts, epsilon, secondOrder):
+def solver(S_G, constraints, nodes, struts, epsilon, secondOrder, debug):
+
+	interBound = 1000
+
+	#first iteration with N=0
+	for ID, strut in struts.iteritems():
+		strut["N"] = 0
+
+	K = assemble_global_K_I(nodes, struts)
+	apply_constraints(K, struts, nodes, constraints)
+	K = symmetrize(K)
+
+	# update strut K
+	#applyConstToStrutK(struts, constraints)
+
 	d = solveLinear(K, S_G, constraints, nodes)
 
+	calculateN(nodes, struts, d)
+
+	printDebugMatrix("K", K, debug)
+
 	if secondOrder:
-		#first iteration with N=0
-		for ID, strut in struts.iteritems():
-			strut["N"] = 0
 		#iteration
 		i = 1
+		print "################################################################################"
+		
 		while True:
 			#save the last result
 			lastN = {}
 			for ID, strut in struts.iteritems():
 				lastN[ID] = strut["N"]
 
+			K = assemble_global_K_I(nodes, struts)
+			Kgeom = calculateKgeom(struts, nodes)
+
+			printDebugMatrix("K", K, debug)
+
+			K += Kgeom
+
+			apply_constraints(K, struts, nodes, constraints)
+			K = symmetrize(K)
+
+			d = solveLinear(K, S_G, constraints, nodes)
+
+			# update strut K
+			#applyConstToStrutK(struts, constraints)
+
 			#calculate new result
 			calculateN(nodes, struts, d)
-
-			Kgeom = calculateKgeom(struts, nodes)
-			d = solveLinear(K+Kgeom, S_G, constraints, nodes)
 
 			#calculate largest delta
 			newN = {}
@@ -64,7 +98,17 @@ def solver(K, S_G, constraints, nodes, struts, epsilon, secondOrder):
 			i += 1
 
 			if delta <= epsilon:
-				print "\n"
+				# debug
+				printDebugMatrix("K + Kgeom", K, debug)
+				printDebugMatrix("Kgeom", Kgeom, debug)
+				
+				print "################################################################################"
+				print ""
+	
 				break
+
+			if i >= interBound:
+				print('System is unstable (delta N not converging after ' + str(i) + ' iterations)!')
+				exit()
 
 	return d
