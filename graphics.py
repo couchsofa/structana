@@ -465,7 +465,7 @@ def drawSystem(nodes, struts, constraints, strutLoads, nodeLoads, d, size, saveP
 
 	# Extend plot for margin
 	lim = getPlotLimit(ax)
-	offset = abs(lim[1]/10)
+	offset = abs(lim[1]/5)
 	x1,x2,y1,y2 = plt.axis()
 	plt.axis((x1-offset,x2+offset,y1-offset,y2+offset))
 	

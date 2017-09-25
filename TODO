@@ -1,12 +1,5 @@
 TODO
 
- * add example
- * flip axis
+ * (flip axis)
+ * calculate resultants
  * visualize resulants
- * update paper (options, solver)
-
-
- load_vectors.py 66 -> Vorzeichenwechsel (Auflagerreaktion?)			einfaches Beispiel mit Kragarm!!
- matrices.py	286 -> rotations matrix invertieren? global -> lokal
-
-make iterBound an option

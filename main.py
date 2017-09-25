@@ -130,6 +130,13 @@ def main():
 										dest="secondOrder",
 										help="Perform iterative second order analysis")
 
+	group.add_option("-B", "--iterBound",
+										type="int",
+										action="store",
+										dest="iterBound",
+										default=1000,
+										help="Number of iterations before giving up")
+
 	parser.add_option_group(group)
 
 ################################################################################
@@ -170,7 +177,7 @@ def main():
 		print('System is kinematic (n < 3)!')
 		exit()
 
-	d = solver(S_G, constraints, nodes, struts, options.epsilon, options.secondOrder, options.debug)
+	d = solver(S_G, constraints, nodes, struts, options.epsilon, options.secondOrder, options.debug, options.iterBound)
 	calc_local_forces(nodes, struts, d)
 
 	# debug

@@ -6,7 +6,14 @@ def calculateN(nodes, struts, d):
 	calc_local_forces(nodes, struts, d)
 
 	for ID, strut in struts.iteritems():
-		strut["N"] = strut["Sl"][0]
+		Ni = strut['Sl'][0]
+		Nk = strut['Sl'][3]
+		if Ni == 0:
+			strut['N'] = Nk
+		elif Nk == 0:
+			strut['N'] = Ni
+		else:
+			strut['N'] = Nk
 
 
 def solveLinear(K, S_G, constraints, nodes):
@@ -33,9 +40,7 @@ def solveLinear(K, S_G, constraints, nodes):
 	return d
 
 
-def solver(S_G, constraints, nodes, struts, epsilon, secondOrder, debug):
-
-	interBound = 1000
+def solver(S_G, constraints, nodes, struts, epsilon, secondOrder, debug, interBound):
 
 	#first iteration with N=0
 	for ID, strut in struts.iteritems():
@@ -46,15 +51,16 @@ def solver(S_G, constraints, nodes, struts, epsilon, secondOrder, debug):
 	K = symmetrize(K)
 
 	# update strut K
-	#applyConstToStrutK(struts, constraints)
+	applyConstToStrutK(struts, constraints)
 
 	d = solveLinear(K, S_G, constraints, nodes)
-
-	calculateN(nodes, struts, d)
 
 	printDebugMatrix("K", K, debug)
 
 	if secondOrder:
+
+		calculateN(nodes, struts, d)
+
 		#iteration
 		i = 1
 		print "################################################################################"
@@ -78,7 +84,13 @@ def solver(S_G, constraints, nodes, struts, epsilon, secondOrder, debug):
 			d = solveLinear(K, S_G, constraints, nodes)
 
 			# update strut K
-			#applyConstToStrutK(struts, constraints)
+			for ID, strut in struts.iteritems():
+				N = strut["N"]
+				l = strut["l"]
+
+				strut['K'] += Kgeom_(N,l)
+
+			applyConstToStrutK(struts, constraints)
 
 			#calculate new result
 			calculateN(nodes, struts, d)
